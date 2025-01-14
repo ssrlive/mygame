@@ -12,14 +12,10 @@ fn add_people(mut commands: Commands) {
     commands.spawn((Person, Name("Zayna Nieves".to_string())));
 }
 
-fn greet_people(query: Query<&Name, With<Person>>) {
+fn greet_people(_time: Res<Time>, query: Query<&Name, With<Person>>) {
     for name in query.iter() {
         println!("hello {}!", name.0);
     }
-}
-
-fn hello_world() {
-    println!("hello world!");
 }
 
 fn update_people(mut query: Query<&mut Name, With<Person>>) {
@@ -33,7 +29,7 @@ pub struct HelloPlugin;
 impl Plugin for HelloPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, add_people);
-        app.add_systems(Update, (hello_world, (update_people, greet_people).chain()));
+        app.add_systems(Update, (update_people, greet_people).chain());
     }
 }
 
