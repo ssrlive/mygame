@@ -22,9 +22,15 @@ fn hello_world() {
     println!("hello world!");
 }
 
+fn update_people(mut query: Query<&mut Name, With<Person>>) {
+    for mut name in query.iter_mut() {
+        name.0 = name.0.to_uppercase();
+    }
+}
+
 fn main() {
     App::new()
         .add_systems(Startup, add_people)
-        .add_systems(Update, (hello_world, greet_people))
+        .add_systems(Update, (hello_world, (update_people, greet_people).chain()))
         .run();
 }
