@@ -3,6 +3,8 @@ name = "mygame"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+bevy_debug_stepping = []
+
 [dependencies]
-bevy_ecs = "=0.15.0"
 bevy = "0.15"
