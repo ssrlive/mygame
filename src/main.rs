@@ -1,9 +1,20 @@
 use bevy::prelude::*;
-use iyes_perf_ui::{prelude::PerfUiAllEntries, PerfUiPlugin};
+use iyes_perf_ui::{
+    prelude::{PerfUiEntryFPS, PerfUiEntryFPSWorst, PerfUiRoot},
+    PerfUiPlugin,
+};
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-    commands.spawn(PerfUiAllEntries::default());
+    commands.spawn((
+        PerfUiRoot {
+            display_labels: false,
+            layout_horizontal: true,
+            ..default()
+        },
+        PerfUiEntryFPSWorst::default(),
+        PerfUiEntryFPS::default(),
+    ));
 }
 
 fn main() {
