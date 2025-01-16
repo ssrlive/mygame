@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.15"
+iyes_perf_ui = { git = "https://github.com/makeecat/iyes_perf_ui.git" }
