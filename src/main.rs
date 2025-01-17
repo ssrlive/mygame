@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 mod alien;
 mod game;
+mod player;
 mod resolution;
 
 fn main() {
