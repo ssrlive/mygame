@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
+mod alien;
 mod game;
+mod resolution;
 
 fn main() {
     App::new()
