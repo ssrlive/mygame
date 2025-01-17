@@ -8,7 +8,6 @@ impl Plugin for ResolutionPlugin {
     }
 }
 
-#[allow(dead_code)]
 #[derive(Resource)]
 pub struct Resolution {
     pub screen_dimensions: Vec2,
