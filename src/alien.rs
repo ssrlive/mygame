@@ -10,9 +10,19 @@ impl Plugin for AlienPlugin {
     }
 }
 
+const WIDTH: i32 = 10;
+const HEIGHT: i32 = 5;
+const SPACING: f32 = 24.;
+
 fn setup_aliens(mut commands: Commands, asset_server: Res<AssetServer>, resolution: Res<Resolution>) {
-    commands.spawn((
-        Sprite::from_image(asset_server.load("alien.png")),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)).with_scale(Vec3::splat(resolution.pixel_ratio)),
-    ));
+    let alien_texture = asset_server.load("alien.png");
+    for x in 0..WIDTH {
+        for y in 0..HEIGHT {
+            let position = Vec3::new(x as f32 * SPACING, y as f32 * SPACING, 0.0);
+            commands.spawn((
+                Sprite::from_image(alien_texture.clone()),
+                Transform::from_translation(position).with_scale(Vec3::splat(resolution.pixel_ratio)),
+            ));
+        }
+    }
 }
