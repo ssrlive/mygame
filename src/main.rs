@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
+mod game;
+
 fn main() {
     App::new()
-        .add_plugins(
+        .add_plugins((
+            // list of plugins
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
@@ -14,6 +17,7 @@ fn main() {
                     ..WindowPlugin::default()
                 })
                 .set(ImagePlugin::default_nearest()),
-        )
+            game::GamePlugin,
+        ))
         .run();
 }
