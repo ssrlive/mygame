@@ -70,9 +70,12 @@ fn setup_level(
 }
 
 fn update_bird(
-    mut bird_query: Query<(&mut Transform, &mut Bird)>,
+    mut commands: Commands,
+    mut bird_query: Query<(&mut Transform, &mut Bird), Without<Obstacle>>,
+    mut obstacle_query: Query<(&mut Transform, Entity), With<Obstacle>>,
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
+    game_manager: Res<GameManager>,
 ) {
     if let Ok((mut transform, mut bird)) = bird_query.get_single_mut() {
         if keys.just_pressed(KeyCode::Space) {
@@ -84,6 +87,36 @@ fn update_bird(
             Vec3::Z,
             f32::clamp(bird.velocity / VELOCITY_TO_ROTATION_RATIO, -90.0, 90.0).to_radians(),
         );
+
+        let mut dead = false;
+        if transform.translation.y <= -game_manager.window_dimensions.y / 2. {
+            dead = true;
+        } else {
+            for (pipe_transform, _entity) in obstacle_query.iter_mut() {
+                let pipe_tran = &pipe_transform.translation;
+                let trans_trans = &transform.translation;
+                if (pipe_tran.y - trans_trans.y).abs() < OBSTACLE_HEIGHT / 2.0 * PIXEL_RATIO
+                    && (pipe_tran.x - trans_trans.x).abs() < OBSTACLE_WIDTH / 2.0 * PIXEL_RATIO
+                {
+                    dead = true;
+                    break;
+                }
+            }
+        }
+        if dead {
+            transform.translation = Vec3::ZERO;
+            bird.velocity = 0.0;
+            for (_transform, entity) in obstacle_query.iter_mut() {
+                commands.entity(entity).despawn();
+            }
+            let mut rand = thread_rng();
+            spawn_obstacles(
+                &mut commands,
+                &mut rand,
+                game_manager.window_dimensions.x,
+                &game_manager.pipe_image,
+            );
+        }
     }
 }
 
