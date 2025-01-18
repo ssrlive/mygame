@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::resolution::Resolution;
+use crate::{projectile::Projectile, resolution::Resolution};
 
 pub struct PlayerPlugin;
 
@@ -34,6 +34,8 @@ const BULLET_SPEED: f32 = 400.0;
 const SHOOT_COOLDOWN: f32 = 0.5;
 
 fn update_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut player_query: Query<(&mut Player, &mut Transform)>,
     resolution: Res<Resolution>,
     time: Res<Time>,
@@ -59,5 +61,13 @@ fn update_player(
 
     player.shoot_timer -= time.delta_secs();
 
-    if keys.pressed(KeyCode::Space) && player.shoot_timer <= 0.0 {}
+    if keys.pressed(KeyCode::Space) && player.shoot_timer <= 0.0 {
+        player.shoot_timer = SHOOT_COOLDOWN;
+        let bullet_texture = asset_server.load("bullet.png");
+        commands.spawn((
+            Sprite::from_image(bullet_texture),
+            Transform::from_translation(transform.translation).with_scale(Vec3::splat(resolution.pixel_ratio)),
+            Projectile { speed: BULLET_SPEED },
+        ));
+    }
 }

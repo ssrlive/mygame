@@ -3,6 +3,7 @@ use bevy::prelude::*;
 mod alien;
 mod game;
 mod player;
+mod projectile;
 mod resolution;
 
 fn main() {
