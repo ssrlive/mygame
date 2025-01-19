@@ -2,3 +2,8 @@
 .VSCodeCounter/
 Cargo.lock
 /target
+/.fleet
+/.idea
+/config.toml
+/db.sqlite3
+/assets
