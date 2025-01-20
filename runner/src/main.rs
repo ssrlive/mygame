@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // #![feature(test)]
 #![allow(clippy::op_ref)]
 
@@ -8,6 +9,7 @@ mod events;
 mod input_map;
 mod plugins;
 mod resources;
+mod settings;
 mod solve;
 mod state;
 mod systems;
