@@ -1,4 +1,4 @@
-use soukoban::deadlock;
+use sokoban::deadlock;
 
 mod utils;
 use utils::*;

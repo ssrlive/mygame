@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use criterion::{black_box, criterion_group, Criterion};
-use soukoban::{deadlock, Map};
+use sokoban::{deadlock, Map};
 
 use super::utils::*;
 

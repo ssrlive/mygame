@@ -1,7 +1,7 @@
 use benimator::{Animation, FrameRate};
 use bevy::{prelude::*, window::WindowResized, winit::WinitWindows};
 use nalgebra::Vector2;
-use soukoban::{direction::Direction, Level};
+use sokoban::{direction::Direction, Level};
 
 use crate::{components::*, events::*, resources::*};
 

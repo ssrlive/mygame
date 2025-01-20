@@ -8,7 +8,7 @@ use std::{
 use crate::solve::solver::*;
 
 use nalgebra::Vector2;
-use soukoban::{
+use sokoban::{
     deadlock,
     direction::Direction,
     path_finding::{find_path, normalized_area, reachable_area},

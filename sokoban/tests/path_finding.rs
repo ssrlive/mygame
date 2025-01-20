@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use nalgebra::Vector2;
-use soukoban::path_finding::*;
+use sokoban::path_finding::*;
 
 mod utils;
 use utils::*;

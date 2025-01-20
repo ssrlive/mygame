@@ -1,4 +1,4 @@
-use soukoban::{direction::Direction, Action, Actions, Level, Tiles};
+use sokoban::{direction::Direction, Action, Actions, Level, Tiles};
 
 #[derive(Clone)]
 pub struct Board {

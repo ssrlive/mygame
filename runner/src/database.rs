@@ -5,7 +5,7 @@ use std::{
 };
 
 use rusqlite::Connection;
-use soukoban::{Actions, Level};
+use sokoban::{Actions, Level};
 
 pub struct Database {
     connection: Connection,

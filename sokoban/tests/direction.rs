@@ -1,4 +1,4 @@
-use soukoban::direction::*;
+use sokoban::direction::*;
 
 #[test]
 fn rotate() {

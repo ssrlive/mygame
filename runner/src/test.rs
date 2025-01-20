@@ -4,7 +4,7 @@
 mod tests {
     // use super::test::Bencher;
     use crate::{board::Board, solve::solver::*};
-    use soukoban::Level;
+    use sokoban::Level;
     use std::{ops::RangeBounds, time::Duration};
 
     #[cfg(not(debug_assertions))]

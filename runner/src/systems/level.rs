@@ -1,7 +1,7 @@
 use arboard::Clipboard;
 use bevy::{color::palettes::css::*, prelude::*};
 use nalgebra::Vector2;
-use soukoban::{Level, Tiles};
+use sokoban::{Level, Tiles};
 
 use crate::{board, calculate_camera_default_scale, components::*, database, resources::*};
 

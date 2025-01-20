@@ -1,5 +1,5 @@
 use nalgebra::Vector2;
-use soukoban::{solver::*, Level};
+use sokoban::{solver::*, Level};
 
 mod utils;
 use utils::*;

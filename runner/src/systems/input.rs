@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs};
 use bevy::{input::mouse::MouseMotion, prelude::*, window::WindowMode};
 use leafwing_input_manager::{action_diff::ActionDiffEvent, prelude::*};
 use nalgebra::Vector2;
-use soukoban::{direction::Direction, path_finding::find_path, Level, Tiles};
+use sokoban::{direction::Direction, path_finding::find_path, Level, Tiles};
 
 use crate::{
     components::*, events::*, resources::*, systems::level::*, utils::PushState, Action, AppState,

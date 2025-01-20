@@ -1,5 +1,5 @@
 [package]
-name = "soukoban-runner"
+name = "sokoban-runner"
 version = "0.1.0"
 edition = "2021"
 
@@ -17,7 +17,7 @@ leafwing-input-manager = "0.16"
 nalgebra = "0.33"
 rusqlite = { version = "0.33", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
-soukoban = { path = "../soukoban" }
+sokoban = { path = "../sokoban" }
 toml = "0.8"
 # The version needs to be consistent with the one used in bevy
 winit = "0.30"

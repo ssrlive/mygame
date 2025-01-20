@@ -1,6 +1,6 @@
 use bevy::{color::palettes::css::*, prelude::*};
 use itertools::Itertools;
-use soukoban::{deadlock::calculate_static_deadlocks, path_finding::reachable_area, Tiles};
+use sokoban::{deadlock::calculate_static_deadlocks, path_finding::reachable_area, Tiles};
 
 use crate::{box_pushable_paths, components::*, resources::*, AppState};
 

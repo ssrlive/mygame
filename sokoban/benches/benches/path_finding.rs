@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use criterion::{black_box, criterion_group, Criterion};
 use nalgebra::Vector2;
-use soukoban::{path_finding, Level};
+use sokoban::{path_finding, Level};
 
 use super::utils::*;
 

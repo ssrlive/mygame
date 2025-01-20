@@ -1,7 +1,7 @@
 use std::fs;
 
 use criterion::{black_box, criterion_group, Criterion};
-use soukoban::Level;
+use sokoban::Level;
 
 fn load_from_str(c: &mut Criterion) {
     let mut buf = String::new();
