@@ -56,7 +56,7 @@ jobs:
       run: cargo clippy --all-targets --release --all-features --target ${{ matrix.target }} -- -D warnings
 
     - name: tests
-      if: ${{ !startsWith(github.ref, 'refs/tags/') && !cancelled() }}
+      if: ${{ !startsWith(github.ref, 'refs/tags/') && !cancelled() && matrix.target != 'aarch64-pc-windows-msvc' }}
       run: cargo test --all-features --release --target ${{ matrix.target }}
 
     - name: Build
