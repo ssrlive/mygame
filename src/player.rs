@@ -22,6 +22,7 @@ pub fn move_player(
         if keys.pressed(KeyCode::KeyA) || keys.pressed(KeyCode::ArrowLeft) {
             walking = true;
             transform.translation.x -= delta;
+            transform.rotation = Quat::from_rotation_y(-std::f32::consts::PI);
         }
         if keys.pressed(KeyCode::KeyS) || keys.pressed(KeyCode::ArrowDown) {
             walking = true;
@@ -30,6 +31,7 @@ pub fn move_player(
         if keys.pressed(KeyCode::KeyD) || keys.pressed(KeyCode::ArrowRight) {
             walking = true;
             transform.translation.x += delta;
+            transform.rotation = Quat::default();
         }
         animator.current_animation = if walking { "Walk" } else { "Idle" }.to_string();
     }
