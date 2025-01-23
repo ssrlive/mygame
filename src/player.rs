@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::animation::Animator;
+
 #[derive(Component)]
 pub struct PlayerMovement {
     pub speed: f32,
@@ -8,21 +10,27 @@ pub struct PlayerMovement {
 pub fn move_player(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&PlayerMovement, &mut Transform)>,
+    mut query: Query<(&PlayerMovement, &mut Transform, &mut Animator)>,
 ) {
-    for (player_movement, mut transform) in query.iter_mut() {
+    for (player_movement, mut transform, mut animator) in query.iter_mut() {
         let delta = player_movement.speed * time.delta_secs();
+        let mut walking = false;
         if keys.pressed(KeyCode::KeyW) || keys.pressed(KeyCode::ArrowUp) {
+            walking = true;
             transform.translation.y += delta;
         }
         if keys.pressed(KeyCode::KeyA) || keys.pressed(KeyCode::ArrowLeft) {
+            walking = true;
             transform.translation.x -= delta;
         }
         if keys.pressed(KeyCode::KeyS) || keys.pressed(KeyCode::ArrowDown) {
+            walking = true;
             transform.translation.y -= delta;
         }
         if keys.pressed(KeyCode::KeyD) || keys.pressed(KeyCode::ArrowRight) {
+            walking = true;
             transform.translation.x += delta;
         }
+        animator.current_animation = if walking { "Walk" } else { "Idle" }.to_string();
     }
 }
