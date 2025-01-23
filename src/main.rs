@@ -38,11 +38,34 @@ fn setup_env(
         Animator::new(create_player_anim_hashmap(), "Walk", 0.0, 0.05),
         PlayerMovement { speed: 100.0 },
     ));
+
+    let texture_handle = asset_server.load("gun.png");
+    let texture_atlas =
+        TextureAtlasLayout::from_grid(UVec2::new(8 + 1, 8 + 1), 5, 1, Some(UVec2::new(1, 1)), None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    commands.spawn((
+        Sprite::from_atlas_image(
+            texture_handle,
+            TextureAtlas {
+                layout: texture_atlas_handle,
+                index: 0,
+            },
+        ),
+        Transform::from_scale(Vec3::splat(5.0)),
+        Animator::new(create_gun_anim_hashmap(), "Shoot", 0.0, 0.05),
+    ));
 }
 
 pub fn create_player_anim_hashmap() -> HashMap<String, Animation> {
     let mut hash_map = HashMap::new();
     hash_map.insert("Walk".to_string(), Animation::new(1, 3, true, 0.1));
+    hash_map.insert("Idle".to_string(), Animation::new(1, 1, true, 0.1));
+    hash_map
+}
+
+pub fn create_gun_anim_hashmap() -> HashMap<String, Animation> {
+    let mut hash_map = HashMap::new();
+    hash_map.insert("Shoot".to_string(), Animation::new(1, 5, true, 0.1));
     hash_map.insert("Idle".to_string(), Animation::new(1, 1, true, 0.1));
     hash_map
 }
