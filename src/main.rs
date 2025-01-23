@@ -3,14 +3,16 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 mod animation;
+mod player;
 
 use animation::{animate_sprite, Animation, Animator};
+use player::{move_player, PlayerMovement};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup_env)
-        .add_systems(Update, animate_sprite)
+        .add_systems(Update, (animate_sprite, move_player))
         .run();
 }
 
@@ -34,6 +36,7 @@ fn setup_env(
         ),
         Transform::from_scale(Vec3::splat(5.0)),
         Animator::new(create_player_anim_hashmap(), "Walk", 0.0, 0.05),
+        PlayerMovement { speed: 100.0 },
     ));
 }
 
