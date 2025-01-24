@@ -16,21 +16,13 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup_env)
-        .add_systems(
-            Update,
-            (animate_sprite, move_player, gun_controls, attach_objects),
-        )
+        .add_systems(Update, (animate_sprite, move_player, gun_controls, attach_objects))
         .run();
 }
 
-fn setup_env(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
-) {
+fn setup_env(mut commands: Commands, asset_server: Res<AssetServer>, mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>) {
     let texture_handle = asset_server.load("player.png");
-    let texture_atlas =
-        TextureAtlasLayout::from_grid(UVec2::new(8 + 1, 9 + 1), 3, 1, Some(UVec2::new(1, 1)), None);
+    let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(8 + 1, 9 + 1), 3, 1, Some(UVec2::new(1, 1)), None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn(Camera2d);
     commands.spawn((
@@ -47,8 +39,7 @@ fn setup_env(
     ));
 
     let texture_handle = asset_server.load("gun.png");
-    let texture_atlas =
-        TextureAtlasLayout::from_grid(UVec2::new(8 + 1, 8 + 1), 5, 1, Some(UVec2::new(1, 1)), None);
+    let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(8 + 1, 8 + 1), 5, 1, Some(UVec2::new(1, 1)), None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
     commands.spawn((
         Sprite::from_atlas_image(

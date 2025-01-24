@@ -16,10 +16,7 @@ pub fn animate_sprite(time: Res<Time>, mut query: Query<(&mut Animator, &mut Spr
         if animator.timer <= 0. {
             animator.timer = anim.cooldown;
             if anim.looping {
-                texture_atlas.index = ((texture_atlas.index + 1 - (anim.start - 1))
-                    % (anim.end - anim.start + 1))
-                    + anim.start
-                    - 1;
+                texture_atlas.index = ((texture_atlas.index + 1 - (anim.start - 1)) % (anim.end - anim.start + 1)) + anim.start - 1;
             } else {
                 texture_atlas.index += 1;
                 if texture_atlas.index > anim.end - 1 {
@@ -60,12 +57,7 @@ pub struct Animator {
 }
 
 impl Animator {
-    pub fn new(
-        animation_bank: HashMap<String, Animation>,
-        current_animation: &str,
-        timer: f32,
-        cooldown: f32,
-    ) -> Self {
+    pub fn new(animation_bank: HashMap<String, Animation>, current_animation: &str, timer: f32, cooldown: f32) -> Self {
         Self {
             animation_bank,
             last_animation: current_animation.to_string(),
