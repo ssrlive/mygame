@@ -3,16 +3,23 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 mod animation;
+mod gun;
 mod player;
+mod player_attach;
 
 use animation::{animate_sprite, Animation, Animator};
+use gun::{gun_controls, GunController};
 use player::{move_player, PlayerMovement};
+use player_attach::{attach_objects, PlayerAttach};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup_env)
-        .add_systems(Update, (animate_sprite, move_player))
+        .add_systems(
+            Update,
+            (animate_sprite, move_player, gun_controls, attach_objects),
+        )
         .run();
 }
 
@@ -53,6 +60,8 @@ fn setup_env(
         ),
         Transform::from_scale(Vec3::splat(5.0)),
         Animator::new(create_gun_anim_hashmap(), "Shoot", 0.0, 0.05),
+        PlayerAttach::new(Vec2::new(15.0, -5.0)),
+        GunController,
     ));
 }
 
