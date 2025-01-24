@@ -5,13 +5,17 @@ use bevy::prelude::*;
 mod animation;
 mod bullet;
 mod cursor_info;
+mod enemy;
+mod enemy_spawner;
 mod gun;
 mod player;
 mod player_attach;
 
 use animation::{animate_sprite, Animation, Animator};
-use bullet::update_bullets;
+use bullet::{update_bullet_hits, update_bullets};
 use cursor_info::OffsetedCursorPositon;
+use enemy::update_enemies;
+use enemy_spawner::{update_spawning, EnemySpawner};
 use gun::{gun_controls, GunController};
 use player::{move_player, PlayerMovement};
 use player_attach::{attach_objects, PlayerAttach};
@@ -20,7 +24,19 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup_env)
-        .add_systems(Update, (animate_sprite, move_player, gun_controls, attach_objects, update_bullets))
+        .add_systems(
+            Update,
+            (
+                animate_sprite,
+                move_player,
+                gun_controls,
+                attach_objects,
+                update_bullets,
+                update_enemies,
+                update_bullet_hits,
+                update_spawning,
+            ),
+        )
         .insert_resource(OffsetedCursorPositon(Vec2::new(0.0, 0.0)))
         .run();
 }
@@ -47,6 +63,8 @@ fn setup_env(mut commands: Commands, asset_server: Res<AssetServer>, mut texture
         PlayerAttach::new(Vec2::new(15.0, -5.0)),
         GunController::new(0.3),
     ));
+
+    commands.spawn((Transform::default(), EnemySpawner::new(1.0, 1.0)));
 }
 
 pub fn create_player_anim_hashmap() -> HashMap<String, Animation> {
