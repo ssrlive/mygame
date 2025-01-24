@@ -17,7 +17,7 @@ pub fn animate_sprite(time: Res<Time>, mut query: Query<(&mut Animator, &mut Spr
             animator.timer = anim.cooldown;
             if anim.looping {
                 texture_atlas.index = ((texture_atlas.index + 1 - (anim.start - 1)) % (anim.end - anim.start + 1)) + anim.start - 1;
-            } else {
+            } else if !anim.looping {
                 texture_atlas.index += 1;
                 if texture_atlas.index > anim.end - 1 {
                     texture_atlas.index = anim.end - 1;

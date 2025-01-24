@@ -3,11 +3,13 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 mod animation;
+mod cursor_info;
 mod gun;
 mod player;
 mod player_attach;
 
 use animation::{animate_sprite, Animation, Animator};
+use cursor_info::OffsetedCursorPositon;
 use gun::{gun_controls, GunController};
 use player::{move_player, PlayerMovement};
 use player_attach::{attach_objects, PlayerAttach};
@@ -17,6 +19,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_systems(Startup, setup_env)
         .add_systems(Update, (animate_sprite, move_player, gun_controls, attach_objects))
+        .insert_resource(OffsetedCursorPositon(Vec2::new(0.0, 0.0)))
         .run();
 }
 

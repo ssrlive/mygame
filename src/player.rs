@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::animation::Animator;
+use crate::{animation::Animator, cursor_info::OffsetedCursorPositon, gun::GunController};
 
 #[derive(Component)]
 pub struct PlayerMovement {
@@ -11,6 +11,8 @@ pub fn move_player(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&PlayerMovement, &mut Transform, &mut Animator)>,
+    mut gun_query: Query<&mut Sprite, (With<GunController>, Without<PlayerMovement>)>,
+    cursor_res: ResMut<OffsetedCursorPositon>,
 ) {
     for (player_movement, mut transform, mut animator) in query.iter_mut() {
         let delta = player_movement.speed * time.delta_secs();
@@ -34,5 +36,8 @@ pub fn move_player(
             transform.rotation = Quat::default();
         }
         animator.current_animation = if walking { "Walk" } else { "Idle" }.to_string();
+        for mut sprite in gun_query.iter_mut() {
+            sprite.flip_y = cursor_res.0.x < transform.translation.x;
+        }
     }
 }
