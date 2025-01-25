@@ -5,24 +5,21 @@ use std::collections::HashMap;
 
 pub fn animate_sprite(time: Res<Time>, mut query: Query<(&mut Animator, &mut Sprite)>) {
     for (mut animator, mut sprite) in query.iter_mut() {
-        let anim = animator.animation_bank[animator.current_animation.as_str()];
         let Some(texture_atlas) = sprite.texture_atlas.as_mut() else {
             continue;
         };
+        let anim = animator.animation_bank[animator.current_animation.as_str()];
         if animator.last_animation != animator.current_animation {
             texture_atlas.index = anim.start - 1;
         }
         animator.timer -= time.delta().as_secs_f32();
         if animator.timer <= 0. {
             animator.timer = anim.cooldown;
-            if anim.looping {
-                texture_atlas.index = ((texture_atlas.index + 1 - (anim.start - 1)) % (anim.end - anim.start + 1)) + anim.start - 1;
-            } else if !anim.looping {
-                texture_atlas.index += 1;
-                if texture_atlas.index > anim.end - 1 {
-                    texture_atlas.index = anim.end - 1;
-                }
-            }
+            texture_atlas.index = if anim.looping {
+                ((texture_atlas.index + 1 - (anim.start - 1)) % (anim.end - anim.start + 1)) + anim.start - 1
+            } else {
+                (texture_atlas.index + 1).min(anim.end - 1)
+            };
         }
         animator.last_animation = animator.current_animation.clone();
     }

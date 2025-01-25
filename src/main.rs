@@ -17,7 +17,7 @@ use cursor_info::OffsetedCursorPositon;
 use enemy::update_enemies;
 use enemy_spawner::{update_spawning, EnemySpawner};
 use gun::{gun_controls, GunController};
-use player::{move_player, PlayerMovement};
+use player::{move_player, PlayerParameters};
 use player_attach::{attach_objects, PlayerAttach};
 
 fn main() {
@@ -42,15 +42,16 @@ fn main() {
 }
 
 fn setup_env(mut commands: Commands, asset_server: Res<AssetServer>, mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>) {
+    commands.spawn(Camera2d);
+
     let texture_handle = asset_server.load("player.png");
     let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(8 + 1, 9 + 1), 3, 1, Some(UVec2::new(1, 1)), None);
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    commands.spawn(Camera2d);
     commands.spawn((
         Sprite::from_atlas_image(texture_handle, texture_atlas_handle.into()),
         Transform::from_scale(Vec3::splat(5.0)),
         Animator::new(create_player_anim_hashmap(), "Walk", 0.0, 0.05),
-        PlayerMovement { speed: 100.0 },
+        PlayerParameters { speed: 100.0 },
     ));
 
     let texture_handle = asset_server.load("gun.png");

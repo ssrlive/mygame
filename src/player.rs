@@ -3,19 +3,19 @@ use bevy::prelude::*;
 use crate::{animation::Animator, cursor_info::OffsetedCursorPositon, gun::GunController};
 
 #[derive(Component)]
-pub struct PlayerMovement {
+pub struct PlayerParameters {
     pub speed: f32,
 }
 
 pub fn move_player(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&PlayerMovement, &mut Transform, &mut Animator)>,
-    mut gun_query: Query<&mut Sprite, (With<GunController>, Without<PlayerMovement>)>,
+    mut query: Query<(&PlayerParameters, &mut Transform, &mut Animator)>,
+    mut gun_query: Query<&mut Sprite, (With<GunController>, Without<PlayerParameters>)>,
     cursor_res: ResMut<OffsetedCursorPositon>,
 ) {
-    for (player_movement, mut transform, mut animator) in query.iter_mut() {
-        let delta = player_movement.speed * time.delta_secs();
+    for (player_cfg, mut transform, mut animator) in query.iter_mut() {
+        let delta = player_cfg.speed * time.delta_secs();
         let mut walking = false;
         if keys.pressed(KeyCode::KeyW) || keys.pressed(KeyCode::ArrowUp) {
             walking = true;

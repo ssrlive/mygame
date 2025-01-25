@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 
-use crate::player::PlayerMovement;
+use crate::player::PlayerParameters;
 
 #[derive(Component)]
-pub struct EnemyConfig {
+pub struct EnemyParameters {
     pub health: f32,
     pub speed: f32,
 }
 
-impl EnemyConfig {
+impl EnemyParameters {
     pub fn new(health: f32, speed: f32) -> Self {
         Self { health, speed }
     }
@@ -16,11 +16,11 @@ impl EnemyConfig {
 
 pub fn update_enemies(
     time: Res<Time>,
-    mut enemy_query: Query<(&EnemyConfig, &mut Transform, Entity), Without<PlayerMovement>>,
-    player_query: Query<(&PlayerMovement, &mut Transform), Without<EnemyConfig>>,
+    mut enemy_query: Query<(&EnemyParameters, &mut Transform, Entity), Without<PlayerParameters>>,
+    player_query: Query<(&PlayerParameters, &mut Transform), Without<EnemyParameters>>,
     mut commands: Commands,
 ) {
-    if let Ok((_player_movement, player_transform)) = player_query.get_single() {
+    if let Ok((_player, player_transform)) = player_query.get_single() {
         for (enemy, mut transform, entity) in enemy_query.iter_mut() {
             let moving = Vec3::normalize(player_transform.translation - transform.translation) * enemy.speed * time.delta_secs();
             transform.translation += moving;

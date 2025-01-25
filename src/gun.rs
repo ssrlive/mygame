@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 
-use crate::{animation::Animator, bullet::Bullet, cursor_info::OffsetedCursorPositon};
+use crate::{animation::Animator, bullet::BulletParameters, cursor_info::OffsetedCursorPositon};
 
 const BULLET_LIFETIME: f32 = 10.0;
 const BULLET_SPEED: f32 = 1000.0;
@@ -58,8 +58,8 @@ pub fn gun_controls(
             spawn_transform.rotation = Quat::from_axis_angle(Vec3::new(0.0, 0.0, 1.0), angle);
 
             let bullet_sprite = Sprite::from_image(asset_server.load("bullet.png"));
-            let bullet_cfg = Bullet::new(BULLET_LIFETIME, BULLET_SPEED, diff.normalize());
-            commands.spawn((bullet_sprite, spawn_transform, bullet_cfg));
+            let bullet_param = BulletParameters::new(BULLET_LIFETIME, BULLET_SPEED, diff.normalize());
+            commands.spawn((bullet_sprite, spawn_transform, bullet_param));
         }
     }
 }
