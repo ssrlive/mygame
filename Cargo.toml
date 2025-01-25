@@ -1,7 +1,10 @@
 [package]
-name = "mygame"
+name = "game-2048"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 bevy = "0.15"
+bevy_easings = "0.15.0"
+itertools = "0.14"
+rand = "0.8.5"
