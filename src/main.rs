@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::texture::ImageSettings, sprite::Anchor};
+use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -6,17 +6,25 @@ mod pipes;
 use crate::pipes::{Pipe, PointsGate, SpawnPipe};
 
 fn main() {
+    let window = Window {
+        title: "Floppy Corgi".to_string(),
+        position: WindowPosition::Centered(MonitorSelection::Primary),
+        resolution: Vec2::new(1200.0, 600.0).into(),
+        ..default()
+    };
     App::new()
-        .insert_resource(WindowDescriptor {
-            title: "Floppy Corgi".to_string(),
-            width: 1200.0,
-            height: 600.0,
-            ..Default::default()
-        })
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(window),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        )
         .init_resource::<Score>()
-        .insert_resource(ClearColor(Color::rgb(0.0, 42.0 / 255.0, 0.0)))
-        .insert_resource(ImageSettings::default_nearest())
-        .add_plugins(DefaultPlugins)
+        .insert_resource(ClearColor(Color::srgb(0.0, 42.0 / 255.0, 0.0)))
+        // .insert_resource(ImageSettings::default_nearest())
+        // .add_plugins(DefaultPlugins)
         .init_resource::<NumPipesToSpawn>()
         .add_loading_state(
             LoadingState::new(MyStates::AssetLoading)
@@ -38,7 +46,7 @@ fn main() {
         .run();
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 struct MyAssets {
     #[asset(texture_atlas(tile_size_x = 500., tile_size_y = 500., columns = 12, rows = 1))]
     #[asset(path = "corgi.png")]
@@ -55,9 +63,10 @@ struct Corgi;
 #[derive(Component)]
 struct Ground;
 
+#[derive(Resource)]
 struct NumPipesToSpawn(u32);
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 struct Score(u32);
 
 impl FromWorld for NumPipesToSpawn {
@@ -78,13 +87,11 @@ fn setup(
 ) {
     let window = windows.primary();
 
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scale = 1.0;
-    commands.spawn_bundle(camera);
+    commands.spawn(Camera2d);
 
     let sprite_size = 100.0;
 
-    commands.spawn_bundle(SpriteBundle {
+    commands.spawn(SpriteBundle {
         sprite: Sprite {
             custom_size: Some(Vec2::new(1920.0, 1080.0)),
             ..Default::default()
@@ -94,7 +101,7 @@ fn setup(
     });
 
     commands
-        .spawn_bundle(SpriteSheetBundle {
+        .spawn(SpriteSheetBundle {
             texture_atlas: assets.corgi.clone(),
             transform: Transform::from_xyz(-window.width() / 4.0, 0.0, 1.0),
             sprite: TextureAtlasSprite {
@@ -121,7 +128,7 @@ fn setup(
     // Ground
     let ground_size = Vec2::new(window.width(), window.height() / 10.0);
     commands
-        .spawn_bundle(SpriteBundle {
+        .spawn(SpriteBundle {
             sprite: Sprite {
                 color: Color::rgb(0.14, 0.75, 0.46),
                 custom_size: Some(Vec2::new(ground_size.x, ground_size.y)),
@@ -135,7 +142,7 @@ fn setup(
         .insert(Ground);
 
     for index in 0..(num_pipes.0) {
-        commands.add(SpawnPipe {
+        commands.queue(SpawnPipe {
             image: assets.hill.clone(),
             transform: Transform::from_xyz(200.0 + 400.0 * index as f32, 0.0, 1.0),
         });
@@ -210,7 +217,7 @@ fn display_events(
     corgi: Query<Entity, With<Corgi>>,
     mut score: ResMut<Score>,
 ) {
-    for collision_event in collision_events.iter() {
+    for collision_event in collision_events.read() {
         let corgi = corgi.single();
         match collision_event {
             CollisionEvent::Started(a, b, _flags) => {
@@ -242,7 +249,7 @@ fn despawn_pipes(
         if transform.translation.x < -window.width() / 2.0 {
             commands.entity(entity).despawn_recursive();
 
-            commands.add(SpawnPipe {
+            commands.queue(SpawnPipe {
                 image: assets.hill.clone(),
                 transform: Transform::from_xyz(window.width() - 200.0, 0.0, 1.0),
             });
