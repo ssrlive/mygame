@@ -66,17 +66,17 @@ jobs:
       run: |
         mkdir mypubdir4
         if [[ "${{ matrix.host_os }}" == "windows-latest" ]]; then
-          powershell Compress-Archive -Path target/${{ matrix.target }}/release/old-gun.exe, target/${{ matrix.target }}/release/assets -DestinationPath mypubdir4/sokoban-${{ matrix.target }}.zip
+          powershell Compress-Archive -Path target/${{ matrix.target }}/release/old-gun.exe, target/${{ matrix.target }}/release/assets -DestinationPath mypubdir4/old-gun-${{ matrix.target }}.zip
         elif [[ "${{ matrix.host_os }}" == "macos-latest" ]]; then
           zip -j mypubdir4/old-gun-${{ matrix.target }}.zip target/${{ matrix.target }}/release/old-gun
-          cp -r target/${{ matrix.target }}/release/assets ./
-          zip -r mypubdir4/old-gun-${{ matrix.target }}.zip assets
-          rm -rf assets
+          # cp -r target/${{ matrix.target }}/release/assets ./
+          zip -r mypubdir4/old-gun-${{ matrix.target }}.zip ./assets
+          # rm -rf ./assets
         elif [[ "${{ contains(matrix.host_os, 'ubuntu') }}" == "true" ]]; then
           zip -j mypubdir4/old-gun-${{ matrix.target }}.zip target/${{ matrix.target }}/release/old-gun
-          cp -r target/${{ matrix.target }}/release/assets ./
-          zip -r mypubdir4/old-gun-${{ matrix.target }}.zip assets
-          rm -rf assets
+          # cp -r target/${{ matrix.target }}/release/assets ./
+          zip -r mypubdir4/old-gun-${{ matrix.target }}.zip ./assets
+          # rm -rf ./assets
         fi
 
     - name: Publish
