@@ -151,20 +151,15 @@ enum MyStates {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
-fn animate_sprite(
-    time: Res<Time>,
-    texture_atlases: Res<Assets<TextureAtlas>>,
-    mut query: Query<(
-        &mut AnimationTimer,
-        &mut TextureAtlasSprite,
-        &Handle<TextureAtlas>,
-    )>,
-) {
-    for (mut timer, mut sprite, texture_atlas_handle) in &mut query {
+fn animate_sprite(time: Res<Time>, mut query: Query<(&mut AnimationTimer, &mut Sprite)>) {
+    for (mut timer, mut sprite) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
-            let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
-            sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
+            let Some(texture_atlas) = sprite.texture_atlas.as_mut() else {
+                continue;
+            };
+            // sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
+            texture_atlas.index = (texture_atlas.index + 1) % 12;
         }
     }
 }
