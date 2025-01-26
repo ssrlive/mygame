@@ -1,7 +1,11 @@
 [package]
-name = "mygame"
+name = "floppy-corgi"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 bevy = "0.15"
+bevy_asset_loader = { version = "0.22", features = ["2d"] }
+bevy_kira_audio = "0.22"
+bevy_rapier2d = "0.28"
+noise = "0.9"
