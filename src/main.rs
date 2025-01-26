@@ -123,15 +123,13 @@ fn setup(
     // Ground
     let ground_size = Vec2::new(window.width(), window.height() / 10.0);
     commands
-        .spawn(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(0.14, 0.75, 0.46),
-                custom_size: Some(Vec2::new(ground_size.x, ground_size.y)),
-                ..default()
-            },
-            transform: Transform::from_xyz(0.0, -window.height() / 2.0 + ground_size.y / 2.0, 1.0),
-            ..default()
-        })
+        .spawn((
+            Sprite::from_color(
+                Color::srgb(0.14, 0.75, 0.46),
+                Vec2::new(ground_size.x, ground_size.y),
+            ),
+            Transform::from_xyz(0.0, -window.height() / 2.0 + ground_size.y / 2.0, 1.0),
+        ))
         .insert(RigidBody::Fixed)
         .insert(Collider::cuboid(ground_size.x / 2.0, ground_size.y / 2.0))
         .insert(Ground);
@@ -183,15 +181,11 @@ fn corgi_control(
 }
 
 fn align_to_window(
-    windows: Res<Windows>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
     mut corgis: Query<&mut Transform, With<Corgi>>,
     mut ground: Query<(&mut Sprite, &mut Transform, &mut Collider), (With<Ground>, Without<Corgi>)>,
 ) {
-    if !windows.is_changed() {
-        return;
-    }
-
-    let window = windows.primary();
+    let window = window_query.get_single().unwrap();
     for mut corgi in corgis.iter_mut() {
         corgi.translation.x = -window.width() / 4.0;
     }
@@ -236,14 +230,13 @@ fn display_events(
 fn despawn_pipes(
     mut commands: Commands,
     pipes: Query<(Entity, &Transform), With<Pipe>>,
-    windows: Res<Windows>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
     assets: Res<MyAssets>,
 ) {
-    let window = windows.primary();
+    let window = window_query.get_single().unwrap();
     for (entity, transform) in pipes.iter() {
         if transform.translation.x < -window.width() / 2.0 {
             commands.entity(entity).despawn_recursive();
-
             commands.queue(SpawnPipe {
                 image: assets.hill.clone(),
                 transform: Transform::from_xyz(window.width() - 200.0, 0.0, 1.0),
