@@ -8,3 +8,6 @@ bevy = "0.15"
 bevy_asset_loader = { version = "0.22", features = ["2d"] }
 itertools = "0.14"
 rand = "0.8"
+
+[build-dependencies]
+fs_extra = "1.2"
