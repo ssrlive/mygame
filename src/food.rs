@@ -12,8 +12,8 @@ impl Plugin for FoodPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<NewFoodEvent>()
             .add_event::<SpawnApple>()
-            .observe(food_event_listener)
-            .observe(spawn_apples);
+            .add_observer(food_event_listener)
+            .add_observer(spawn_apples);
     }
 }
 #[derive(Event)]
@@ -46,17 +46,7 @@ fn spawn_apples(trigger: Trigger<SpawnApple>, mut commands: Commands, board: Res
     let x = board.cell_position_to_physical(position.x);
     let y = board.cell_position_to_physical(position.y);
 
-    commands.spawn((
-        SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::splat(TILE_SIZE)),
-                ..default()
-            },
-            texture: image_assets.apple.clone(),
-            transform: Transform::from_xyz(x, y, 2.0),
-            ..default()
-        },
-        position,
-        Food,
-    ));
+    let mut sprite = Sprite::from_image(image_assets.apple.clone());
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+    commands.spawn((sprite, Transform::from_xyz(x, y, 2.0), position, Food));
 }

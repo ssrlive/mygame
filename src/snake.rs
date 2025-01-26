@@ -3,8 +3,8 @@ use std::collections::VecDeque;
 use bevy::{
     app::{Plugin, Update},
     math::{Quat, Vec2},
-    prelude::{default, Commands, Entity, Event, IntoSystemConfigs, Query, Res, ResMut, Resource, Transform, Trigger},
-    sprite::{Sprite, SpriteBundle, TextureAtlas},
+    prelude::{Commands, Entity, Event, IntoSystemConfigs, Query, Res, ResMut, Resource, Transform, Trigger},
+    sprite::{Sprite, TextureAtlas},
     state::condition::in_state,
 };
 use itertools::Itertools;
@@ -25,7 +25,7 @@ impl Plugin for SnakePlugin {
         app.add_event::<SpawnSnakeSegmentEvent>()
             .init_resource::<Snake>()
             .add_systems(Update, render_snake_segments.run_if(in_state(GameState::Playing)))
-            .observe(spawn_snake_segment);
+            .add_observer(spawn_snake_segment);
     }
 }
 
@@ -34,7 +34,7 @@ pub struct Snake {
     pub segments: VecDeque<Entity>,
 }
 
-pub fn render_snake_segments(snake: Res<Snake>, mut positions: Query<(&Position, &mut TextureAtlas, &mut Transform)>) {
+pub fn render_snake_segments(snake: Res<Snake>, mut positions: Query<(&Position, &mut Sprite, &mut Transform)>) {
     use RelativePosition::*;
 
     let snake_texture_index = 0;
@@ -45,7 +45,9 @@ pub fn render_snake_segments(snake: Res<Snake>, mut positions: Query<(&Position,
         let pos_second = positions.get(*second).unwrap().0;
         let rotation = Quat::from(pos.detect_side(pos_second));
         let (_, mut sprite, mut transform) = positions.get_mut(*first).unwrap();
-        sprite.index = snake_texture_index;
+        if let Some(texture_atlas) = sprite.texture_atlas.as_mut() {
+            texture_atlas.index = snake_texture_index;
+        }
         transform.rotation = rotation;
     }
 
@@ -57,7 +59,9 @@ pub fn render_snake_segments(snake: Res<Snake>, mut positions: Query<(&Position,
         let rotation = Quat::from(pos.detect_side(second_to_last_pos));
 
         let (_, mut sprite, mut transform) = positions.get_mut(*last).unwrap();
-        sprite.index = snake_texture_index + 3;
+        if let Some(texture_atlas) = sprite.texture_atlas.as_mut() {
+            texture_atlas.index = snake_texture_index + 3;
+        }
         transform.rotation = rotation;
     }
 
@@ -83,7 +87,9 @@ pub fn render_snake_segments(snake: Res<Snake>, mut positions: Query<(&Position,
         };
 
         let (_, mut sprite, mut transform) = positions.get_mut(*origin).unwrap();
-        sprite.index = image.0;
+        if let Some(texture_atlas) = sprite.texture_atlas.as_mut() {
+            texture_atlas.index = image.0;
+        }
         transform.rotation = image.1;
     }
 }
@@ -103,24 +109,11 @@ fn spawn_snake_segment(
     let x = board.cell_position_to_physical(position.x);
     let y = board.cell_position_to_physical(position.y);
 
-    let entity = commands
-        .spawn((
-            SpriteBundle {
-                texture: image_assets.snake.clone(),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::splat(TILE_SIZE)),
-                    ..default()
-                },
-                transform: Transform::from_xyz(x, y, 2.0),
-                ..default()
-            },
-            TextureAtlas {
-                index: 8,
-                layout: image_assets.snake_layout.clone(),
-            },
-            position,
-        ))
-        .id();
+    let mut atlas = TextureAtlas::from(image_assets.snake_layout.clone());
+    atlas.index = 8;
+    let mut sprite = Sprite::from_atlas_image(image_assets.snake.clone(), atlas);
+    sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
+    let entity = commands.spawn((sprite, Transform::from_xyz(x, y, 2.0), position)).id();
 
     snake.segments.push_front(entity);
 }

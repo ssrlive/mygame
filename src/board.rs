@@ -44,44 +44,16 @@ pub fn spawn_board(mut commands: Commands, images: Res<ImageAssets>, board: Res<
     let dist = WeightedIndex::new(weights).unwrap();
 
     commands
-        .spawn(SpriteBundle {
-            sprite: Sprite {
-                color: colors::BOARD,
-                custom_size: Some(Vec2::splat(
-                    board.physical_size,
-                )),
-                ..default()
-            },
-            ..default()
-        })
+        .spawn(Sprite::from_color(colors::BOARD, Vec2::splat(board.physical_size)))
         .with_children(|builder| {
             for pos in board.tiles() {
+                let mut texture_atlas = TextureAtlas::from(images.grass_layout.clone());
+                texture_atlas.index = dist.sample(&mut rng);
+                let mut sprite = Sprite::from_atlas_image(images.grass.clone(), texture_atlas);
+                sprite.custom_size = Some(Vec2::splat(TILE_SIZE));
                 builder.spawn((
-                    SpriteBundle {
-                        texture: images.grass.clone(),
-                        sprite: Sprite {
-                            custom_size: Some(Vec2::splat(
-                                TILE_SIZE,
-                            )),
-                            ..default()
-                        },
-                        transform: Transform::from_xyz(
-                            board
-                                .cell_position_to_physical(
-                                    pos.x,
-                                ),
-                            board
-                                .cell_position_to_physical(
-                                    pos.y,
-                                ),
-                            1.0,
-                        ),
-                        ..default()
-                    },
-                    TextureAtlas {
-                        layout: images.grass_layout.clone(),
-                        index: dist.sample(&mut rng),
-                    },
+                    sprite,
+                    Transform::from_xyz(board.cell_position_to_physical(pos.x), board.cell_position_to_physical(pos.y), 1.0),
                 ));
             }
         });

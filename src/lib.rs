@@ -27,6 +27,7 @@ enum GameOverReason {
     Win,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn tick(
     mut commands: Commands,
     mut snake: ResMut<Snake>,
@@ -122,26 +123,21 @@ pub fn reset_game(
 pub fn spawn_menu(mut commands: Commands, fonts: Res<FontAssets>) {
     commands
         .spawn((
-            ButtonBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Px(65.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
+            Button,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(65.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..default()
             },
             StateScoped(GameState::Menu),
         ))
         .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                "New Game",
-                TextStyle {
-                    font: fonts.outfit.clone(),
-                    font_size: 40.0,
-                    color: Color::srgb(0.1, 0.1, 0.1),
-                },
+            parent.spawn((
+                Text::new("New Game"),
+                TextFont::from_font(fonts.outfit.clone()).with_font_size(40.0),
+                TextColor(Color::srgb(0.1, 0.1, 0.1)),
             ));
         });
 }
@@ -150,6 +146,7 @@ const NORMAL_BUTTON: Color = Color::srgb(0.95, 0.95, 0.95);
 const HOVERED_BUTTON: Color = Color::srgb(0.85, 0.85, 0.85);
 const PRESSED_BUTTON: Color = Color::srgb(0.75, 0.75, 0.75);
 
+#[allow(clippy::type_complexity)]
 pub fn button_system(
     mut interaction_query: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<Button>)>,
     mut next_state: ResMut<NextState<GameState>>,
