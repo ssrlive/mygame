@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_asset_loader::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -12,13 +12,14 @@ fn main() {
         resolution: Vec2::new(1200.0, 600.0).into(),
         ..default()
     };
+    let window_plugin = WindowPlugin {
+        primary_window: Some(window),
+        ..default()
+    };
     App::new()
         .add_plugins(
             DefaultPlugins
-                .set(WindowPlugin {
-                    primary_window: Some(window),
-                    ..default()
-                })
+                .set(window_plugin)
                 .set(ImagePlugin::default_nearest()),
         )
         .init_resource::<Score>()
@@ -50,7 +51,7 @@ fn main() {
 struct MyAssets {
     #[asset(texture_atlas(tile_size_x = 500., tile_size_y = 500., columns = 12, rows = 1))]
     #[asset(path = "corgi.png")]
-    corgi: Handle<TextureAtlas>,
+    corgi: Handle<Image>,
     #[asset(path = "hill_large.png")]
     hill: Handle<Image>,
     #[asset(path = "backgroundColorGrass.png")]
@@ -81,37 +82,31 @@ impl FromWorld for NumPipesToSpawn {
 
 fn setup(
     mut commands: Commands,
-    windows: Res<Windows>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
     assets: Res<MyAssets>,
     num_pipes: Res<NumPipesToSpawn>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
-    let window = windows.primary();
+    let window = window_query.get_single().unwrap();
 
     commands.spawn(Camera2d);
 
     let sprite_size = 100.0;
 
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            custom_size: Some(Vec2::new(1920.0, 1080.0)),
-            ..Default::default()
-        },
-        texture: assets.background.clone(),
-        ..Default::default()
+    commands.spawn({
+        let mut sprite = Sprite::from_image(assets.background.clone());
+        sprite.custom_size = Some(Vec2::new(1920.0, 1080.0));
+        sprite
     });
 
+    let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(500, 500), 12, 1, None, None);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let mut sprite = Sprite::from_atlas_image(assets.corgi.clone(), texture_atlas_handle.into());
+    sprite.flip_x = true;
+    sprite.custom_size = Some(Vec2::new(sprite_size, sprite_size));
     commands
-        .spawn(SpriteSheetBundle {
-            texture_atlas: assets.corgi.clone(),
-            transform: Transform::from_xyz(-window.width() / 4.0, 0.0, 1.0),
-            sprite: TextureAtlasSprite {
-                flip_x: true,
-                custom_size: Some(Vec2::new(sprite_size, sprite_size)),
-                ..default()
-            },
-            ..default()
-        })
-        .insert(AnimationTimer(Timer::from_seconds(0.1, true)))
+        .spawn((sprite, Transform::from_xyz(-window.width() / 4.0, 0.0, 1.0)))
+        .insert(AnimationTimer(Timer::from_seconds(0.1, TimerMode::Once)))
         .insert(RigidBody::Dynamic)
         .insert(Velocity::zero())
         .insert(Collider::cuboid(sprite_size / 2.0, sprite_size / 2.0))
