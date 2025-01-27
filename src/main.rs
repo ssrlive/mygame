@@ -61,7 +61,7 @@ struct NumPipesToSpawn(u32);
 
 impl FromWorld for NumPipesToSpawn {
     fn from_world(world: &mut World) -> Self {
-        let window = world.get_resource::<Windows>().unwrap().primary();
+        let window = world.query_filtered::<&Window, With<PrimaryWindow>>().single(&world);
 
         let num_pipes = (window.width() / 400.0) as u32;
 
