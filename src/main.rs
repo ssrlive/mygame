@@ -30,8 +30,8 @@ fn main() {
         .add_systems(OnEnter(MyStates::Next), setup)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_systems(
-            OnEnter(MyStates::Next), // Update, //
-            (animate_sprite, corgi_control, align_to_window, display_events, despawn_pipes),
+            Update,
+            (animate_sprite, corgi_control, align_to_window, display_events, despawn_pipes).run_if(in_state(MyStates::Next)),
         )
         .run();
 }
@@ -53,11 +53,11 @@ struct Corgi;
 #[derive(Component)]
 struct Ground;
 
-#[derive(Resource)]
-struct NumPipesToSpawn(u32);
-
 #[derive(Default, Resource)]
 struct Score(u32);
+
+#[derive(Resource)]
+struct NumPipesToSpawn(u32);
 
 impl FromWorld for NumPipesToSpawn {
     fn from_world(world: &mut World) -> Self {
