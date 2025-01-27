@@ -17,32 +17,21 @@ fn main() {
         ..default()
     };
     App::new()
-        .add_plugins(
-            DefaultPlugins
-                .set(window_plugin)
-                .set(ImagePlugin::default_nearest()),
-        )
+        .add_plugins(DefaultPlugins.set(window_plugin).set(ImagePlugin::default_nearest()))
         .init_resource::<Score>()
         .insert_resource(ClearColor(Color::srgb(0.0, 42.0 / 255.0, 0.0)))
-        // .insert_resource(ImageSettings::default_nearest())
-        // .add_plugins(DefaultPlugins)
         .init_resource::<NumPipesToSpawn>()
+        .init_state::<MyStates>()
         .add_loading_state(
             LoadingState::new(MyStates::AssetLoading)
                 .continue_to_state(MyStates::Next)
                 .load_collection::<MyAssets>(),
         )
-        .add_state(MyStates::AssetLoading)
-        .add_system_set(SystemSet::on_enter(MyStates::Next).with_system(setup))
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        // .add_plugin(RapierDebugRenderPlugin::default())
-        .add_system_set(
-            SystemSet::on_update(MyStates::Next)
-                .with_system(animate_sprite)
-                .with_system(corgi_control)
-                .with_system(align_to_window)
-                .with_system(display_events)
-                .with_system(despawn_pipes),
+        .add_systems(OnEnter(MyStates::Next), setup)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_systems(
+            OnEnter(MyStates::Next), // Update, //
+            (animate_sprite, corgi_control, align_to_window, display_events, despawn_pipes),
         )
         .run();
 }
@@ -124,10 +113,7 @@ fn setup(
     let ground_size = Vec2::new(window.width(), window.height() / 10.0);
     commands
         .spawn((
-            Sprite::from_color(
-                Color::srgb(0.14, 0.75, 0.46),
-                Vec2::new(ground_size.x, ground_size.y),
-            ),
+            Sprite::from_color(Color::srgb(0.14, 0.75, 0.46), Vec2::new(ground_size.x, ground_size.y)),
             Transform::from_xyz(0.0, -window.height() / 2.0 + ground_size.y / 2.0, 1.0),
         ))
         .insert(RigidBody::Fixed)
@@ -165,10 +151,7 @@ fn animate_sprite(time: Res<Time>, mut query: Query<(&mut AnimationTimer, &mut S
     }
 }
 
-fn corgi_control(
-    mut corgi: Query<(&mut Velocity, &mut ExternalImpulse), With<Corgi>>,
-    buttons: Res<ButtonInput<MouseButton>>,
-) {
+fn corgi_control(mut corgi: Query<(&mut Velocity, &mut ExternalImpulse), With<Corgi>>, buttons: Res<ButtonInput<MouseButton>>) {
     if buttons.any_just_pressed([MouseButton::Left, MouseButton::Right]) {
         let (mut velocity, mut impulse) = corgi.single_mut();
         impulse.impulse = Vect::new(0.0, 200.0);
@@ -195,7 +178,6 @@ fn align_to_window(
     }
 }
 
-/* A system that displays the events. */
 fn display_events(
     mut collision_events: EventReader<CollisionEvent>,
     gates: Query<Entity, With<PointsGate>>,
