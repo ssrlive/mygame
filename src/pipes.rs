@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
-use noise::{BasicMulti, NoiseFn};
+use noise::{BasicMulti, NoiseFn, Perlin};
 
 #[derive(Component)]
 pub struct Pipe {
@@ -23,14 +23,14 @@ pub struct SpawnPipe {
 
 impl Command for SpawnPipe {
     fn apply(self, world: &mut World) {
-        let time = world.get_resource::<Time>().unwrap().time_since_startup();
+        let time = world.get_resource::<Time>().unwrap();
         let window = world.get_resource::<Windows>().unwrap().primary();
         // Pipe
         let pipe_size = Vec2::new(200.0, window.height());
-        let noise = BasicMulti::new();
+        let noise = BasicMulti::<Perlin>::default();
         let center_of_opening = noise.get([
             self.transform.translation.x as f64 / 0.0234,
-            time.as_secs_f64(),
+            time.elapsed_secs_f64(),
         ]);
         let position = (window.height() as f64 / 2.0) * center_of_opening;
 

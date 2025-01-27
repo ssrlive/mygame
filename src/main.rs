@@ -166,7 +166,7 @@ fn animate_sprite(time: Res<Time>, mut query: Query<(&mut AnimationTimer, &mut S
 
 fn corgi_control(
     mut corgi: Query<(&mut Velocity, &mut ExternalImpulse), With<Corgi>>,
-    buttons: Res<Input<MouseButton>>,
+    buttons: Res<ButtonInput<MouseButton>>,
 ) {
     if buttons.any_just_pressed([MouseButton::Left, MouseButton::Right]) {
         let (mut velocity, mut impulse) = corgi.single_mut();
