@@ -377,13 +377,11 @@ struct SpawnTile {
 
 impl Command for SpawnTile {
     fn apply(self, world: &mut World) {
-        let board = {
-            let Some(board) = world.get_resource::<Board>() else {
-                warn!("SpawnTile command requires a Res<Board> to exist");
-                return;
-            };
-            board.clone()
+        let Some(board) = world.get_resource::<Board>() else {
+            warn!("SpawnTile command requires a Res<Board> to exist");
+            return;
         };
+        let board = board.clone();
 
         let Some(asset_server) = world.get_resource::<AssetServer>() else {
             warn!("Spawning a tile requires an AssetServer to exist");
