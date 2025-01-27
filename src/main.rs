@@ -30,7 +30,7 @@ fn main() {
         .add_loading_state(
             LoadingState::new(MyStates::AssetLoading)
                 .continue_to_state(MyStates::Next)
-                .with_collection::<MyAssets>(),
+                .load_collection::<MyAssets>(),
         )
         .add_state(MyStates::AssetLoading)
         .add_system_set(SystemSet::on_enter(MyStates::Next).with_system(setup))
@@ -49,7 +49,7 @@ fn main() {
 
 #[derive(AssetCollection, Resource)]
 struct MyAssets {
-    #[asset(texture_atlas(tile_size_x = 500., tile_size_y = 500., columns = 12, rows = 1))]
+    #[asset(texture_atlas(tile_size_x = 500, tile_size_y = 500, columns = 12, rows = 1))]
     #[asset(path = "corgi.png")]
     corgi: Handle<Image>,
     #[asset(path = "hill_large.png")]
@@ -142,8 +142,9 @@ fn setup(
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
 enum MyStates {
+    #[default]
     AssetLoading,
     Next,
 }
