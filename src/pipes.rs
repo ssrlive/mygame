@@ -1,6 +1,8 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{color::palettes::css::SEA_GREEN, prelude::*, window::PrimaryWindow};
 use bevy_rapier2d::prelude::*;
 use noise::{BasicMulti, NoiseFn, Perlin};
+
+const NOISE_SCALE: f64 = 0.0234;
 
 #[derive(Component)]
 pub struct Pipe {
@@ -29,7 +31,7 @@ impl Command for SpawnPipe {
         // Pipe
         let pipe_size = Vec2::new(200.0, window.height());
         let noise = BasicMulti::<Perlin>::default();
-        let center_of_opening = noise.get([self.transform.translation.x as f64 / 0.0234, time.elapsed_secs_f64()]);
+        let center_of_opening = noise.get([self.transform.translation.x as f64 / NOISE_SCALE, time.elapsed_secs_f64()]);
         let position = (window.height() as f64 / 2.0) * center_of_opening;
 
         let gap_size = 200.0;
@@ -40,7 +42,7 @@ impl Command for SpawnPipe {
             .insert(Velocity::linear(Vec2::new(-100.0, 0.0)))
             .with_children(|builder| {
                 // top pipe
-                let mut sprite = Sprite::from_color(Color::srgb(46. / 255., 139. / 255., 87. / 255.), pipe_size);
+                let mut sprite = Sprite::from_color(SEA_GREEN, pipe_size);
                 sprite.flip_y = true;
                 sprite.image = self.image.clone();
                 builder
@@ -64,7 +66,7 @@ impl Command for SpawnPipe {
                     .insert(ActiveEvents::COLLISION_EVENTS);
 
                 // bottom pipe
-                let mut sprite = Sprite::from_color(Color::srgb(46. / 255., 139. / 255., 87. / 255.), pipe_size);
+                let mut sprite = Sprite::from_color(SEA_GREEN, pipe_size);
                 sprite.image = self.image;
 
                 builder
