@@ -1,7 +1,9 @@
 [package]
-name = "mygame"
+name = "game-fps"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 bevy = "0.15"
+bevy_rapier3d = "0.28"
+rand = "0.9"
