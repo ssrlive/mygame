@@ -1,7 +1,17 @@
 [package]
-name = "mygame"
+name = "tiny-shooter"
 version = "0.1.0"
 edition = "2021"
+license = "MIT OR Apache-2.0 OR CC0-1.0"
+
+[features]
+default = ["dev_native"]
+dev = ["bevy/dynamic_linking", "bevy/bevy_dev_tools"]
+dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 
 [dependencies]
-bevy = "0.15"
+bevy = { version = "0.15", features = ["wayland"] }
+bevy_pancam = "0.17"
+kd-tree = "0.6"
+rand = "0.9"
+typenum = "1"
