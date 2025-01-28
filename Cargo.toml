@@ -1,7 +1,17 @@
 [package]
-name = "mygame"
+name = "game-rpg"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = "0.15"
+bevy = { version = "0.15", features = [
+    "bevy_gilrs",
+    "bevy_winit",
+    "png",
+    "hdr",
+    "vorbis",
+    "x11",
+] }
+bevy-inspector-egui = "0.29"
+bevy_kira_audio = { version = "0.22", features = ["ogg", "wav"] }
+rand = "0.9"
