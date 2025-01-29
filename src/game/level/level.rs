@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::Collider;
-use bevy_render::mesh::{Mesh, Mesh3d};
+
+use super::targets::TargetsPlugin;
 
 pub struct LevelPlugin;
 
 impl Plugin for LevelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, init_level);
+        app.add_plugins(TargetsPlugin)
+            .add_systems(Startup, init_level);
     }
 }
 
@@ -22,8 +24,8 @@ fn init_level(
     commands.spawn((
         Collider::cuboid(1000., 0., 1000.),
         MeshMaterial3d(level_material.clone()),
-        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(1000.0)))),
         Transform::IDENTITY,
+        Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(1000.0)))),
     ));
     commands.spawn((
         Collider::cuboid(30.0, 30.0, 30.0),
