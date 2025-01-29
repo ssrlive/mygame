@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use game::plugin::GamePlugin;
+use game::game_plugin::GamePlugin;
 
 mod game;
 

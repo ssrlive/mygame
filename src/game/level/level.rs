@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::prelude::Collider;
 use bevy_render::mesh::{Mesh, Mesh3d};
 
 pub struct LevelPlugin;
