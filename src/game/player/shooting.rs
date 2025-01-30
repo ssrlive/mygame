@@ -10,6 +10,9 @@ use crate::game::{
 #[derive(Component)]
 pub struct Shootable;
 
+#[derive(Component)]
+pub struct TracerSpawnSpot;
+
 pub fn update_player(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut commands: Commands,
@@ -20,9 +23,11 @@ pub fn update_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     target_query: Query<Option<&Target>, With<Shootable>>,
+    spawn_spot: Query<&GlobalTransform, With<TracerSpawnSpot>>,
 ) {
+    let spawn_spot = spawn_spot.get_single().unwrap();
     let window = window_query.get_single().unwrap();
-    let Ok((_, transform)) = query.get_single_mut() else {
+    let Ok((_, _transform)) = query.get_single_mut() else {
         return;
     };
     let Ok((camera, global_transform)) = camera_query.get_single() else {
@@ -59,7 +64,7 @@ pub fn update_player(
                 Transform::from_translation(Vec3::splat(f32::MAX)),
                 Mesh3d(meshes.add(Cuboid::from_size(Vec3::new(0.1, 0.1, 1.0)))),
                 MeshMaterial3d(materials.add(tracer_material)),
-                BulletTracer::new(transform.translation, ray_intersection.point, 100.0),
+                BulletTracer::new(spawn_spot.translation(), ray_intersection.point, 100.0),
             ));
         }
     }

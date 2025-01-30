@@ -5,9 +5,9 @@ use super::{
     camera_controller::{update_camera_controller, CameraController},
     input::PlayerInput,
     movement::{update_movement, update_movement_input},
-    shooting::update_player,
+    shooting::{update_player, TracerSpawnSpot},
 };
-use crate::game::shooting::tracer::TracerPlugin;
+use crate::game::{math::coordinates::blender_to_world, shooting::tracer::TracerPlugin};
 
 pub struct PlayerPlugin;
 
@@ -63,6 +63,10 @@ fn init_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let gun_entity = commands
         .spawn((Transform::IDENTITY, SceneRoot(gun_model)))
         .id();
+    let spawn_spot = blender_to_world(Vec3::new(0.530462, 2.10557, -0.466568));
+    let tracer_spawn_entity = commands
+        .spawn((Transform::from_translation(spawn_spot), TracerSpawnSpot))
+        .id();
     let player_entity = commands
         .spawn((
             Player::new(Vec3::ZERO, 9.81, 20.0),
@@ -77,6 +81,8 @@ fn init_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
         ))
         .id();
-    commands.entity(camera_entity).add_child(gun_entity);
+    commands
+        .entity(camera_entity)
+        .add_children(&[gun_entity, tracer_spawn_entity]);
     commands.entity(player_entity).add_child(camera_entity);
 }
