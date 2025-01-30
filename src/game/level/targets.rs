@@ -1,8 +1,9 @@
-use std::f32::consts::PI;
-
 use bevy::{color::palettes::css::RED, prelude::*};
 use bevy_rapier3d::prelude::Collider;
 use rand::{rngs::ThreadRng, Rng};
+use std::f32::consts::PI;
+
+use crate::game::player::shooting::Shootable;
 
 pub struct TargetsPlugin;
 
@@ -61,6 +62,7 @@ fn init_grid_shot(
             Transform::from_xyz(0.0, 0.0, -40.0),
             Mesh3d(meshes.add(Sphere::new(target_radius))),
             MeshMaterial3d(target_material.clone()),
+            Shootable,
         ));
     }
 }

@@ -62,7 +62,7 @@ fn init_player(mut commands: Commands) {
     let player_entity = commands
         .spawn((
             Player::new(Vec3::ZERO, 9.81, 20.0),
-            Transform::from_translation(Vec3::new(0.0, 10.0, 0.0)),
+            Transform::from_translation(Vec3::new(0.0, 30.0, 0.0)),
             Visibility::default(),
             Collider::cuboid(1.0, 10.0, 1.0),
             RigidBody::KinematicPositionBased,

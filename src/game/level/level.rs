@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::Collider;
 
 use super::targets::TargetsPlugin;
+use crate::game::player::shooting::Shootable;
 
 pub struct LevelPlugin;
 
@@ -26,12 +27,14 @@ fn init_level(
         MeshMaterial3d(level_material.clone()),
         Transform::IDENTITY,
         Mesh3d(meshes.add(Plane3d::new(Vec3::Y, Vec2::splat(1000.0)))),
+        Shootable,
     ));
     commands.spawn((
         Collider::cuboid(30.0, 30.0, 30.0),
         MeshMaterial3d(level_material.clone()),
         Transform::from_xyz(0.0, 0.0, -100.0),
         Mesh3d(meshes.add(Cuboid::from_length(60.0))),
+        Shootable,
     ));
     commands.spawn((
         DirectionalLight {

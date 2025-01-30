@@ -1,29 +1,31 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{plugin::ReadDefaultRapierContext, prelude::QueryFilter};
 
-use super::player::Player;
+use super::{camera_controller::CameraController, player::Player};
 use crate::game::{
     level::targets::{DeadTarget, Target},
     shooting::tracer::BulletTracer,
 };
 
+#[derive(Component)]
+pub struct Shootable;
+
 pub fn update_player(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut commands: Commands,
     rapier_context: ReadDefaultRapierContext,
-    mut query: Query<(
-        &mut Player,
-        &mut Transform,
-        &mut GlobalTransform,
-        &mut Camera,
-    )>,
+    mut query: Query<(&mut Player, &mut Transform)>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<CameraController>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    target_query: Query<Entity, With<Target>>,
+    target_query: Query<Option<&Target>, With<Shootable>>,
 ) {
     let window = window_query.get_single().unwrap();
-    let Ok((_, transform, global_transform, camera)) = query.get_single_mut() else {
+    let Ok((_, transform)) = query.get_single_mut() else {
+        return;
+    };
+    let Ok((camera, global_transform)) = camera_query.get_single() else {
         return;
     };
 
@@ -32,16 +34,20 @@ pub fn update_player(
         let Ok(ray) = camera.viewport_to_world(&global_transform, viewport_position) else {
             return;
         };
+        let predicate = |entity| target_query.get(entity).is_ok();
+        let query_filter = QueryFilter::new().predicate(&predicate);
         let hit = rapier_context.cast_ray_and_get_normal(
             ray.origin,
             ray.direction.into(),
             f32::MAX,
             true,
-            QueryFilter::default(),
+            query_filter,
         );
         if let Some((entity, ray_intersection)) = hit {
-            if let Ok(_entity) = target_query.get(entity) {
-                commands.entity(entity).insert(DeadTarget);
+            if let Ok(target) = target_query.get(entity) {
+                if target.is_some() {
+                    commands.entity(entity).insert(DeadTarget);
+                }
             }
             // spawn tracer and check collisions
             let tracer_material = StandardMaterial {
