@@ -45,7 +45,7 @@ impl Player {
     }
 }
 
-fn init_player(mut commands: Commands) {
+fn init_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     let fov = 103.0_f32.to_radians();
     let camera_entity = commands
         .spawn((
@@ -58,6 +58,10 @@ fn init_player(mut commands: Commands) {
                 sensitivity: 0.035,
             },
         ))
+        .id();
+    let gun_model = asset_server.load("models/ak.glb#Scene0");
+    let gun_entity = commands
+        .spawn((Transform::IDENTITY, SceneRoot(gun_model)))
         .id();
     let player_entity = commands
         .spawn((
@@ -73,5 +77,6 @@ fn init_player(mut commands: Commands) {
             },
         ))
         .id();
+    commands.entity(camera_entity).add_child(gun_entity);
     commands.entity(player_entity).add_child(camera_entity);
 }
