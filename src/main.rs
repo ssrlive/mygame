@@ -1,49 +1,85 @@
-use bevy::{prelude::*, window::PrimaryWindow};
-use bevy_asset_loader::prelude::*;
-use bevy_rapier2d::prelude::*;
+use std::time::Duration;
 
+mod background_material;
 mod pipes;
-use crate::pipes::{Pipe, PointsGate, SpawnPipe};
+
+pub const CANVAS_SIZE: Vec2 = Vec2::new(480., 270.);
+
+use crate::{
+    background_material::BackgroundMaterial,
+    pipes::{EndGame, Pipe, PipeBottom, PipeTop, PointsGate, ScorePoint, Scored, SpawnPipe},
+};
+
+use bevy::{
+    math::bounding::{Aabb2d, IntersectsVolume},
+    prelude::*,
+    render::camera::ScalingMode,
+    sprite::{Anchor, Material2dPlugin},
+    time::common_conditions::on_timer,
+    window::PrimaryWindow,
+};
+use bevy_asset_loader::prelude::*;
+use bevy_transform_interpolation::prelude::{TransformInterpolation, TransformInterpolationPlugin};
 
 fn main() {
-    let window = Window {
-        title: "Floppy Corgi".to_string(),
-        position: WindowPosition::Centered(MonitorSelection::Primary),
-        resolution: Vec2::new(1200.0, 600.0).into(),
-        ..default()
-    };
-    let window_plugin = WindowPlugin {
-        primary_window: Some(window),
-        ..default()
-    };
     App::new()
-        .add_plugins(DefaultPlugins.set(window_plugin).set(ImagePlugin::default_nearest()))
         .init_resource::<Score>()
-        .insert_resource(ClearColor(Color::srgb(0.0, 42.0 / 255.0, 0.0)))
-        .init_resource::<NumPipesToSpawn>()
-        .init_state::<MyStates>()
+        // .insert_resource(ImageSettings::default_nearest())
+        .add_plugins((
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: "Floppy Corgi".into(),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+            TransformInterpolationPlugin::default(),
+            Material2dPlugin::<BackgroundMaterial>::default(),
+        ))
         .add_loading_state(
             LoadingState::new(MyStates::AssetLoading)
                 .continue_to_state(MyStates::Next)
                 .load_collection::<MyAssets>(),
         )
         .add_systems(OnEnter(MyStates::Next), setup)
-        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .init_state::<MyStates>()
         .add_systems(
             Update,
-            (animate_sprite, corgi_control, align_to_window, display_events, despawn_pipes).run_if(in_state(MyStates::Next)),
+            (
+                animate_sprite,
+                corgi_control,
+                despawn_pipes,
+                check_collisions,
+                spawn_pipes.run_if(on_timer(Duration::from_millis(1000))),
+            )
+                .run_if(in_state(MyStates::Next)),
         )
+        .add_systems(FixedUpdate, (gravity, pipes_to_the_left).run_if(in_state(MyStates::Next)))
+        .add_observer(|_trigger: Trigger<EndGame>| {
+            dbg!("trigger endgame");
+        })
+        .add_observer(|_trigger: Trigger<ScorePoint>| {
+            dbg!("trigger point");
+        })
         .run();
 }
 
 #[derive(AssetCollection, Resource)]
 struct MyAssets {
-    #[asset(texture_atlas(tile_size_x = 500, tile_size_y = 500, columns = 12, rows = 1))]
+    #[asset(texture_atlas_layout(tile_size_x = 500, tile_size_y = 500, columns = 12, rows = 1))]
+    corgi_layout: Handle<TextureAtlasLayout>,
+
     #[asset(path = "corgi.png")]
     corgi: Handle<Image>,
+
     #[asset(path = "hill_large.png")]
+    #[asset(image(sampler(filter = nearest)))]
     hill: Handle<Image>,
-    #[asset(path = "backgroundColorGrass.png")]
+
+    #[asset(path = "background_color_grass.png")]
+    #[asset(image(sampler(filter = nearest, wrap = repeat)))]
     background: Handle<Image>,
 }
 
@@ -53,82 +89,101 @@ struct Corgi;
 #[derive(Component)]
 struct Ground;
 
-#[derive(Default, Resource)]
+#[derive(Resource, Default)]
 struct Score(u32);
 
-#[derive(Resource)]
-struct NumPipesToSpawn(u32);
+#[derive(Component)]
+struct Gravity;
 
-impl FromWorld for NumPipesToSpawn {
-    fn from_world(world: &mut World) -> Self {
-        let window = world.query_filtered::<&Window, With<PrimaryWindow>>().single(&world);
+#[derive(Component, Default)]
+struct Velocity(f32);
 
-        let num_pipes = (window.width() / 400.0) as u32;
-
-        NumPipesToSpawn(num_pipes + 1)
-    }
-}
+#[derive(Component, Default)]
+struct Acceleration(f32);
 
 fn setup(
     mut commands: Commands,
-    window_query: Query<&Window, With<PrimaryWindow>>,
     assets: Res<MyAssets>,
-    num_pipes: Res<NumPipesToSpawn>,
-    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<BackgroundMaterial>>,
 ) {
-    let window = window_query.get_single().unwrap();
+    commands.spawn((
+        Camera2d,
+        OrthographicProjection {
+            scaling_mode: ScalingMode::FixedHorizontal {
+                viewport_width: CANVAS_SIZE.x,
+            },
+            ..OrthographicProjection::default_2d()
+        },
+    ));
 
-    commands.spawn(Camera2d);
+    commands.spawn((
+        Mesh2d(meshes.add(Rectangle::new(CANVAS_SIZE.x, CANVAS_SIZE.x))),
+        MeshMaterial2d(materials.add(BackgroundMaterial {
+            color_texture: assets.background.clone(),
+        })),
+    ));
 
-    let sprite_size = 100.0;
+    commands.spawn((
+        Sprite {
+            flip_x: true,
+            custom_size: Some(Vec2::splat(25.0)),
+            image: assets.corgi.clone(),
+            texture_atlas: Some(TextureAtlas {
+                layout: assets.corgi_layout.clone(),
+                index: 0,
+            }),
+            ..default()
+        },
+        Transform::from_xyz(-CANVAS_SIZE.x / 4.0, 0.0, 1.0),
+        AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
+        // .insert(Collider::cuboid(
+        //     sprite_size / 2.0,
+        //     sprite_size / 2.0,
+        // ))
+        TransformInterpolation,
+        Corgi,
+        Gravity,
+        Velocity(0.),
+        Acceleration(10.),
+    ));
 
-    commands.spawn({
-        let mut sprite = Sprite::from_image(assets.background.clone());
-        sprite.custom_size = Some(Vec2::new(1920.0, 1080.0));
-        sprite
-    });
-
-    let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new(500, 500), 12, 1, None, None);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    let mut sprite = Sprite::from_atlas_image(assets.corgi.clone(), texture_atlas_handle.into());
-    sprite.flip_x = true;
-    sprite.custom_size = Some(Vec2::new(sprite_size, sprite_size));
-    commands
-        .spawn((sprite, Transform::from_xyz(-window.width() / 4.0, 0.0, 1.0)))
-        .insert(AnimationTimer(Timer::from_seconds(0.1, TimerMode::Once)))
-        .insert(RigidBody::Dynamic)
-        .insert(Velocity::zero())
-        .insert(Collider::cuboid(sprite_size / 2.0, sprite_size / 2.0))
-        // .insert(ColliderMassProperties::Mass(20.0))
-        .insert(LockedAxes::ROTATION_LOCKED)
-        .insert(ExternalImpulse {
-            impulse: Vec2::new(0.0, 0.0),
-            torque_impulse: 0.0,
-        })
-        .insert(GravityScale(2.5))
-        .insert(Corgi)
-        .insert(ActiveEvents::COLLISION_EVENTS);
-
+    // Sky
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.81, 0.94, 0.99),
+            custom_size: Some(Vec2::new(CANVAS_SIZE.x, CANVAS_SIZE.y * 4.)),
+            anchor: Anchor::BottomCenter,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, -1.0),
+        Ground,
+    ));
     // Ground
-    let ground_size = Vec2::new(window.width(), window.height() / 10.0);
-    commands
-        .spawn((
-            Sprite::from_color(Color::srgb(0.14, 0.75, 0.46), Vec2::new(ground_size.x, ground_size.y)),
-            Transform::from_xyz(0.0, -window.height() / 2.0 + ground_size.y / 2.0, 1.0),
-        ))
-        .insert(RigidBody::Fixed)
-        .insert(Collider::cuboid(ground_size.x / 2.0, ground_size.y / 2.0))
-        .insert(Ground);
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.14, 0.75, 0.46),
+            custom_size: Some(Vec2::new(CANVAS_SIZE.x, CANVAS_SIZE.y * 4.)),
+            anchor: Anchor::TopCenter,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, -1.0),
+        Ground,
+    ));
 
-    for index in 0..(num_pipes.0) {
-        commands.queue(SpawnPipe {
-            image: assets.hill.clone(),
-            transform: Transform::from_xyz(200.0 + 400.0 * index as f32, 0.0, 1.0),
-        });
+    for index in 0..10 {
+        // commands.queue(SpawnPipe {
+        //     image: assets.hill.clone(),
+        //     transform: Transform::from_xyz(
+        //         200.0 + 400.0 * index as f32,
+        //         0.0,
+        //         1.0,
+        //     ),
+        // });
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+#[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
 enum MyStates {
     #[default]
     AssetLoading,
@@ -138,87 +193,92 @@ enum MyStates {
 #[derive(Component, Deref, DerefMut)]
 struct AnimationTimer(Timer);
 
-fn animate_sprite(time: Res<Time>, mut query: Query<(&mut AnimationTimer, &mut Sprite)>) {
+fn animate_sprite(time: Res<Time>, layouts: Res<Assets<TextureAtlasLayout>>, mut query: Query<(&mut AnimationTimer, &mut Sprite)>) {
     for (mut timer, mut sprite) in &mut query {
         timer.tick(time.delta());
         if timer.just_finished() {
-            let Some(texture_atlas) = sprite.texture_atlas.as_mut() else {
-                continue;
-            };
-            // sprite.index = (sprite.index + 1) % texture_atlas.textures.len();
-            texture_atlas.index = (texture_atlas.index + 1) % 12;
+            let atlas = sprite.texture_atlas.as_mut().unwrap();
+            let texture_count = layouts.get(&atlas.layout).unwrap().textures.len();
+            atlas.index = (atlas.index + 1) % texture_count;
         }
     }
 }
 
-fn corgi_control(mut corgi: Query<(&mut Velocity, &mut ExternalImpulse), With<Corgi>>, buttons: Res<ButtonInput<MouseButton>>) {
-    if buttons.any_just_pressed([MouseButton::Left, MouseButton::Right]) {
-        let (mut velocity, mut impulse) = corgi.single_mut();
-        impulse.impulse = Vect::new(0.0, 200.0);
-        velocity.linvel = Vec2::new(0.0, 0.0);
+fn gravity(mut transforms: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Gravity>>, time: Res<Time>) {
+    let gravity: f32 = -2000.;
+
+    for (mut transform, mut velocity, mut acceleration) in &mut transforms {
+        acceleration.0 += gravity * time.delta_secs();
+
+        velocity.0 += acceleration.0 * time.delta_secs();
+
+        transform.translation.y += velocity.0 * time.delta_secs();
     }
 }
 
-fn align_to_window(
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    mut corgis: Query<&mut Transform, With<Corgi>>,
-    mut ground: Query<(&mut Sprite, &mut Transform, &mut Collider), (With<Ground>, Without<Corgi>)>,
+fn corgi_control(
+    mut corgi: Single<(&mut Velocity, &mut Acceleration), With<Corgi>>,
+    buttons: Res<ButtonInput<MouseButton>>,
+    buttons2: Res<ButtonInput<KeyCode>>,
 ) {
-    let window = window_query.get_single().unwrap();
-    for mut corgi in corgis.iter_mut() {
-        corgi.translation.x = -window.width() / 4.0;
-    }
-
-    for (mut sprite, mut transform, mut collider) in ground.iter_mut() {
-        let ground_size = Vec2::new(window.width(), window.height() / 10.0);
-        sprite.custom_size = Some(Vec2::new(ground_size.x, ground_size.y));
-
-        transform.translation.y = -window.height() / 2.0 + ground_size.y / 2.0;
-        *collider = Collider::cuboid(ground_size.x / 2.0, ground_size.y / 2.0)
+    if buttons.any_just_pressed([MouseButton::Left, MouseButton::Right]) || buttons2.pressed(KeyCode::Space) {
+        corgi.0 .0 = 200.;
+        corgi.1 .0 = 0.;
     }
 }
 
-fn display_events(
-    mut collision_events: EventReader<CollisionEvent>,
-    gates: Query<Entity, With<PointsGate>>,
-    corgi: Query<Entity, With<Corgi>>,
-    mut score: ResMut<Score>,
-) {
-    for collision_event in collision_events.read() {
-        let corgi = corgi.single();
-        match collision_event {
-            CollisionEvent::Started(a, b, _flags) => {
-                if let Some((_corgi, other)) = if corgi == *a {
-                    Some((a, b))
-                } else if corgi == *b {
-                    Some((b, a))
-                } else {
-                    None
-                } {
-                    if let Ok(_gate_entity) = gates.get(*other) {
-                        score.0 += 1;
-                    }
-                }
-            }
-            CollisionEvent::Stopped(_a, _b, _flags) => {}
-        }
-    }
-}
-
-fn despawn_pipes(
-    mut commands: Commands,
-    pipes: Query<(Entity, &Transform), With<Pipe>>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    assets: Res<MyAssets>,
-) {
-    let window = window_query.get_single().unwrap();
+fn despawn_pipes(mut commands: Commands, pipes: Query<(Entity, &Transform), With<Pipe>>, window: Single<&Window, With<PrimaryWindow>>) {
     for (entity, transform) in pipes.iter() {
         if transform.translation.x < -window.width() / 2.0 {
             commands.entity(entity).despawn_recursive();
-            commands.queue(SpawnPipe {
-                image: assets.hill.clone(),
-                transform: Transform::from_xyz(window.width() - 200.0, 0.0, 1.0),
-            });
         }
     }
 }
+
+fn spawn_pipes(mut commands: Commands, window: Single<&Window, With<PrimaryWindow>>, assets: Res<MyAssets>) {
+    commands.queue(SpawnPipe {
+        image: assets.hill.clone(),
+        transform: Transform::from_xyz(window.width() - 200.0, 0.0, 1.0),
+    });
+}
+
+const PIPE_SPEED: f32 = 200.;
+
+pub fn pipes_to_the_left(mut pipes: Query<&mut Transform, With<Pipe>>, time: Res<Time>) {
+    for mut pipe in &mut pipes {
+        pipe.translation.x -= PIPE_SPEED * time.delta_secs();
+    }
+}
+
+fn check_collisions(
+    mut commands: Commands,
+    corgi: Single<(&Sprite, &GlobalTransform), With<Corgi>>,
+    pipe_segments: Query<(&GlobalTransform, &Sprite), Or<(With<PipeTop>, With<PipeBottom>)>>,
+    pipe_gaps: Query<(&GlobalTransform, &Sprite, Entity), (With<PointsGate>, Without<Scored>)>,
+    mut gizmos: Gizmos,
+) {
+    let corgi_collider = Aabb2d::new(corgi.1.translation().truncate(), corgi.1.scale().truncate() / 2.);
+    gizmos.rect_2d(corgi.1.translation().truncate(), corgi.0.custom_size.unwrap().xy(), Color::BLACK);
+
+    for (pipe_transform, sprite) in &pipe_segments {
+        let pipe_collider = Aabb2d::new(pipe_transform.translation().truncate(), sprite.custom_size.unwrap().xy() / 2.);
+        gizmos.rect_2d(pipe_transform.translation().xy(), sprite.custom_size.unwrap().xy(), Color::BLACK);
+        if corgi_collider.intersects(&pipe_collider) {
+            commands.trigger(EndGame);
+        }
+    }
+
+    for (pipe_transform, sprite, entity) in &pipe_gaps {
+        let pipe_collider = Aabb2d::new(pipe_transform.translation().truncate(), sprite.custom_size.unwrap().xy() / 2.);
+        gizmos.rect_2d(pipe_transform.translation().xy(), sprite.custom_size.unwrap().xy(), Color::BLACK);
+        if corgi_collider.intersects(&pipe_collider) {
+            commands.trigger(ScorePoint);
+            commands.entity(entity).insert(Scored);
+        }
+    }
+}
+// BoundingCircle::new(ball_transform.translation.truncate(), BALL_DIAMETER / 2.),
+// Aabb2d::new(
+//     collider_transform.translation.truncate(),
+//     collider_transform.scale.truncate() / 2.,
+// ),
