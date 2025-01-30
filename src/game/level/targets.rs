@@ -52,7 +52,7 @@ fn init_grid_shot(
     commands.insert_resource(grid_shot);
 
     let target_radius = grid_shot.cell_size / 8.0;
-    let collider_radius = -target_radius * f32::sin(PI / 4.);
+    let collider_radius = target_radius * f32::sin(PI / 4.);
     for _ in 0..grid_shot.max_targets {
         commands.spawn((
             Target,
