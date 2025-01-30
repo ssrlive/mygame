@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::plugin::{NoUserData, RapierPhysicsPlugin};
 
 use super::{
-    level::level::LevelPlugin, player::player::PlayerPlugin, ui::ui::UiPlugin,
+    level::level_plugin::LevelPlugin, player::player_plugin::PlayerPlugin, ui::ui_plugin::UiPlugin,
     window::WindowSettingsPlugin,
 };
 

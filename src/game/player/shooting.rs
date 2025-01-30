@@ -1,7 +1,7 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use bevy_rapier3d::{plugin::ReadDefaultRapierContext, prelude::QueryFilter};
 
-use super::{camera_controller::CameraController, player::Player};
+use super::{camera_controller::CameraController, player_plugin::Player};
 use crate::game::{
     level::targets::{DeadTarget, Target},
     shooting::tracer::BulletTracer,
@@ -13,6 +13,7 @@ pub struct Shootable;
 #[derive(Component)]
 pub struct TracerSpawnSpot;
 
+#[allow(clippy::too_many_arguments)]
 pub fn update_player(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut commands: Commands,
@@ -36,7 +37,7 @@ pub fn update_player(
 
     if mouse_input.just_pressed(MouseButton::Left) {
         let viewport_position = Vec2::new(window.width() / 2.0, window.height() / 2.0);
-        let Ok(ray) = camera.viewport_to_world(&global_transform, viewport_position) else {
+        let Ok(ray) = camera.viewport_to_world(global_transform, viewport_position) else {
             return;
         };
         let predicate = |entity| target_query.get(entity).is_ok();

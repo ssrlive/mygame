@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{KinematicCharacterController, KinematicCharacterControllerOutput};
 
-use super::{camera_controller::CameraController, input::PlayerInput, player::Player};
+use super::{camera_controller::CameraController, input::PlayerInput, player_plugin::Player};
 
 pub fn update_movement_input(keys: Res<ButtonInput<KeyCode>>, mut input: ResMut<PlayerInput>) {
     input.movement = Vec2::ZERO;

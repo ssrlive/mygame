@@ -1,2 +1,2 @@
 pub(crate) mod crosshair;
-pub(crate) mod ui;
+pub(crate) mod ui_plugin;

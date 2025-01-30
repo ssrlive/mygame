@@ -1,2 +1,2 @@
-pub(crate) mod level;
+pub(crate) mod level_plugin;
 pub(crate) mod targets;

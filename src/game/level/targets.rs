@@ -67,6 +67,7 @@ fn init_grid_shot(
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn update_targets(
     mut commands: Commands,
     grid_shot: Res<GridShot>,
