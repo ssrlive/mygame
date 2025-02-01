@@ -1,0 +1,89 @@
+name: Rust
+
+on:
+  [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+  PROJECT_NAME: flappy-bird-v2
+
+jobs:
+  build_or_publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+
+        include:
+          - target: x86_64-unknown-linux-gnu
+            host_os: ubuntu-20.04
+          - target: x86_64-apple-darwin
+            host_os: macos-latest
+          - target: aarch64-apple-darwin
+            host_os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            host_os: windows-latest
+          - target: aarch64-pc-windows-msvc
+            host_os: windows-latest
+
+    runs-on: ${{ matrix.host_os }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+
+    - name: Prepare
+      shell: bash
+      run: |
+        rustup target add ${{ matrix.target }}
+        if [[ "${{ contains(matrix.host_os, 'ubuntu') }}" == "true" ]]; then
+          sudo apt install libasound2-dev libudev-dev gcc-aarch64-linux-gnu
+        fi
+
+    - name: rustfmt
+      if: ${{ !startsWith(github.ref, 'refs/tags/') && !cancelled() }}
+      run: cargo fmt --all -- --check
+
+    - name: clippy
+      if: ${{ !startsWith(github.ref, 'refs/tags/') && !cancelled() }}
+      run: cargo clippy --all-targets --release --all-features --target ${{ matrix.target }} -- -D warnings
+
+    - name: tests
+      if: ${{ !startsWith(github.ref, 'refs/tags/') && !cancelled() && matrix.target != 'aarch64-pc-windows-msvc' }}
+      run: cargo test --all-features --release --target ${{ matrix.target }}
+
+    - name: Build
+      if: ${{ !cancelled() }}
+      run: cargo build --all-features --release --target ${{ matrix.target }}
+
+    - name: archive
+      if: ${{ !cancelled() }}
+      shell: bash
+      run: |
+        mkdir mypubdir4
+        if [[ "${{ matrix.host_os }}" == "windows-latest" ]]; then
+          powershell Compress-Archive -Path target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }}.exe, ./assets -DestinationPath mypubdir4/${{ env.PROJECT_NAME }}-${{ matrix.target }}.zip
+        elif [[ "${{ matrix.host_os }}" == "macos-latest" ]]; then
+          zip -j mypubdir4/${{ env.PROJECT_NAME }}-${{ matrix.target }}.zip target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }}
+          zip -r mypubdir4/${{ env.PROJECT_NAME }}-${{ matrix.target }}.zip ./assets
+        elif [[ "${{ contains(matrix.host_os, 'ubuntu') }}" == "true" ]]; then
+          zip -j mypubdir4/${{ env.PROJECT_NAME }}-${{ matrix.target }}.zip target/${{ matrix.target }}/release/${{ env.PROJECT_NAME }}
+          zip -r mypubdir4/${{ env.PROJECT_NAME }}-${{ matrix.target }}.zip ./assets
+        fi
+
+    - name: Publish
+      if: ${{ startsWith(github.ref, 'refs/tags/') && !cancelled() }}
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files: mypubdir4/*
+
+    - name: Abort on error
+      if: ${{ failure() }}
+      run: echo "Some of jobs failed" && false
