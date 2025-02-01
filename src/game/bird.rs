@@ -14,19 +14,20 @@ pub(super) fn jump(mut bird: Query<&mut Bird>) {
 
 pub(super) fn fall(mut bird: Query<&mut Bird, With<Bird>>, time: Res<Time>) {
     for mut bird in &mut bird {
-        bird.velocity -= FALL_SPEED * time.delta_seconds();
+        bird.velocity -= FALL_SPEED * time.delta_secs();
         bird.velocity = bird.velocity.max(FALL_VELOCITY_LIMIT);
     }
 }
 
 pub(super) fn move_bird(mut bird: Query<(&mut Transform, &Bird), With<Bird>>, time: Res<Time>) {
     for (mut transform, bird) in &mut bird {
-        transform.translation.y += bird.velocity * MOVE_SPEED * time.delta_seconds();
+        transform.translation.y += bird.velocity * MOVE_SPEED * time.delta_secs();
     }
 }
 
-pub(super) fn animate_bird(mut bird: Query<&mut TextureAtlas, With<Bird>>, time: Res<Time>) {
+pub(super) fn animate_bird(mut bird: Query<&mut Sprite, With<Bird>>, time: Res<Time>) {
     for mut bird in &mut bird {
-        bird.index = (time.elapsed_seconds() * BIRD_ANIMATION_SPEED) as usize % 4;
+        let texture_atlas = bird.texture_atlas.as_mut().unwrap();
+        texture_atlas.index = (time.elapsed_secs() * BIRD_ANIMATION_SPEED) as usize % 4;
     }
 }

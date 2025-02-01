@@ -71,13 +71,12 @@ struct Ground;
 
 fn scene_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Spawn a 2D camera
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     // Spawn the background sprite
-    commands.spawn(SpriteBundle {
-        texture: asset_server.load("sprites/background.png"),
-        ..Default::default()
-    });
+    commands.spawn(Sprite::from_image(
+        asset_server.load("sprites/background.png"),
+    ));
 
     // Spawn 2 ground sprites so that they can scroll infinitely
     let texture_handle = asset_server.load("sprites/ground.png");
@@ -85,11 +84,8 @@ fn scene_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         commands.spawn((
             Ground,
             Scroll,
-            SpriteBundle {
-                texture: texture_handle.clone(),
-                transform: Transform::from_xyz(i as f32 * GROUND_WIDTH, -200.0, GROUND_Z),
-                ..Default::default()
-            },
+            Sprite::from_image(texture_handle.clone()),
+            Transform::from_xyz(i as f32 * GROUND_WIDTH, -200.0, GROUND_Z),
         ));
     }
 

@@ -19,8 +19,8 @@ pub(super) fn spawn_pipe(
         return;
     }
 
-    let mut rng = rand::thread_rng();
-    let y = rng.gen_range(-50.0..50.0);
+    let mut rng = rand::rng();
+    let y = rng.random_range(-50.0..50.0);
 
     let texture = asset_server.load("sprites/pipe.png");
 
@@ -29,26 +29,20 @@ pub(super) fn spawn_pipe(
         ApproachingPipe,
         Scroll,
         DespawnOnReset,
-        SpriteBundle {
-            texture: texture.clone(),
-            transform: Transform::from_xyz(PIPE_SPAWN_OFFSET, y - 160.0, PIPE_Z),
-            ..Default::default()
-        },
+        Sprite::from_image(texture.clone()),
+        Transform::from_xyz(PIPE_SPAWN_OFFSET, y - 160.0, PIPE_Z),
     ));
 
     commands.spawn((
         Pipe,
         Scroll,
         DespawnOnReset,
-        SpriteBundle {
-            texture,
-            transform: Transform::from_xyz(PIPE_SPAWN_OFFSET, y + 160.0 + GAP_HEIGHT, PIPE_Z),
-            sprite: Sprite {
-                flip_y: true,
-                ..Default::default()
-            },
+        Sprite {
+            image: texture.clone(),
+            flip_y: true,
             ..Default::default()
         },
+        Transform::from_xyz(PIPE_SPAWN_OFFSET, y + 160.0 + GAP_HEIGHT, PIPE_Z),
     ));
 }
 
@@ -86,9 +80,8 @@ pub(super) fn check_pipe_collision(
 ) {
     let bird = bird.single();
     for pipe in &pipes {
-        let collision = Aabb2d::new(bird.translation.xy(), BIRD_SIZE / 2.00)
-            .intersects(&Aabb2d::new(pipe.translation.xy(), PIPE_SIZE / 2.0));
-        if collision {
+        let volume = Aabb2d::new(pipe.translation.xy(), PIPE_SIZE / 2.0);
+        if Aabb2d::new(bird.translation.xy(), BIRD_SIZE / 2.0).intersects(&volume) {
             play_state.set(PlayState::HitPipe);
         }
     }

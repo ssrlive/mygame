@@ -59,7 +59,7 @@ impl Plugin for GamePlugin {
                     scroll,
                     reuse_ground,
                 )
-                    .run_if(in_state(GameState::Playing).and_then(in_state(PlayState::Normal))),
+                    .run_if(in_state(GameState::Playing).and(in_state(PlayState::Normal))),
             )
             .add_systems(
                 Update,
@@ -98,50 +98,42 @@ fn game_setup(
     asset_server: Res<AssetServer>,
 ) {
     // Load the bird sprite sheet and create a texture atlas from it
+    let bird_size = UVec2::new(BIRD_SIZE.x as _, BIRD_SIZE.y as _);
     let atlas_layout =
-        texture_atlases.add(TextureAtlasLayout::from_grid(BIRD_SIZE, 4, 1, None, None));
+        texture_atlases.add(TextureAtlasLayout::from_grid(bird_size, 4, 1, None, None));
 
     // Spawn the bird
     commands.spawn((
         Bird::default(),
         DespawnOnReset,
-        SpriteSheetBundle {
-            atlas: TextureAtlas {
+        Sprite::from_atlas_image(
+            asset_server.load("sprites/bird.png"),
+            TextureAtlas {
                 layout: atlas_layout,
                 index: 0,
             },
-            texture: asset_server.load("sprites/bird.png"),
-            transform: Transform::from_xyz(0.0, 0.0, BIRD_Z),
-            ..Default::default()
-        },
+        ),
+        Transform::from_xyz(0.0, 0.0, BIRD_Z),
     ));
 
     // Spawn the score UI
     commands
         .spawn((
             DespawnOnReset,
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    justify_content: JustifyContent::Center,
-                    ..Default::default()
-                },
-                ..Default::default()
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                ..default()
             },
         ))
         .with_children(|node| {
             node.spawn((
                 ScoreText,
-                TextBundle::from_section(
-                    "0",
-                    TextStyle {
-                        font: asset_server.load("fonts/flappybird.ttf"),
-                        font_size: 80.0,
-                        color: Color::WHITE,
-                    },
-                )
-                .with_text_justify(JustifyText::Center),
+                Text::new("0"),
+                TextFont::from_font(asset_server.load("fonts/flappybird.ttf")).with_font_size(80.0),
+                TextColor(Color::WHITE),
+                TextLayout::new_with_justify(JustifyText::Center),
             ));
         });
 
@@ -156,14 +148,14 @@ fn update_score_text(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Sc
     }
 
     for mut text in &mut query {
-        text.sections[0].value = score.0.to_string();
+        text.0 = score.0.to_string();
     }
 }
 
 // Scroll all entities with the Scroll component
 fn scroll(mut query: Query<&mut Transform, With<Scroll>>, time: Res<Time>) {
     for mut transform in &mut query {
-        transform.translation.x -= SCROLL_SPEED * time.delta_seconds();
+        transform.translation.x -= SCROLL_SPEED * time.delta_secs();
     }
 }
 
@@ -194,22 +186,13 @@ fn reset_timer(mut timer: ResMut<PipeSpawnTimer>) {
 }
 
 fn flap_sound(audio_handles: Res<AudioHandles>, mut commands: Commands) {
-    commands.spawn(AudioBundle {
-        source: audio_handles.flap.clone(),
-        ..default()
-    });
+    commands.spawn(AudioPlayer::new(audio_handles.flap.clone()));
 }
 
 fn hit_sound(audio_handles: Res<AudioHandles>, mut commands: Commands) {
-    commands.spawn(AudioBundle {
-        source: audio_handles.hit.clone(),
-        ..default()
-    });
+    commands.spawn(AudioPlayer::new(audio_handles.hit.clone()));
 }
 
 fn point_sound(audio_handles: Res<AudioHandles>, mut commands: Commands) {
-    commands.spawn(AudioBundle {
-        source: audio_handles.point.clone(),
-        ..default()
-    });
+    commands.spawn(AudioPlayer::new(audio_handles.point.clone()));
 }

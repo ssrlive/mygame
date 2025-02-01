@@ -9,7 +9,7 @@ impl Plugin for MenuPlugin {
             .add_systems(OnExit(GameState::Menu), cleanup::<MenuEntity>)
             .add_systems(
                 Update,
-                start_playing.run_if(in_state(GameState::Menu).and_then(has_user_input)),
+                start_playing.run_if(in_state(GameState::Menu).and(has_user_input)),
             );
     }
 }
@@ -19,11 +19,8 @@ struct MenuEntity;
 
 fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("sprites/start.png"),
-            transform: Transform::from_xyz(0.0, 80.0, UI_Z),
-            ..Default::default()
-        },
+        Sprite::from_image(asset_server.load("sprites/start.png")),
+        Transform::from_xyz(0.0, 80.0, UI_Z),
         MenuEntity,
     ));
 }
