@@ -1,7 +1,7 @@
 use super::{bird::Bird, ApproachingPipe, Pipe, PipeSpawnTimer, PlayState, Score};
-use super::{GAP_HEIGHT, PIPE_SPAWN_OFFSET};
+use super::{BIRD_SIZE, GAP_HEIGHT, PIPE_SIZE, PIPE_SPAWN_OFFSET, PIPE_Z, SEED_LIMIT};
 use crate::game_over::DespawnOnReset;
-use crate::{Scroll, BIRD_SIZE, PIPE_SIZE, PIPE_Z};
+use crate::Scroll;
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::prelude::*;
 use rand::Rng;
@@ -20,29 +20,29 @@ pub(super) fn spawn_pipe(
     }
 
     let mut rng = rand::rng();
-    let y = rng.random_range(-50.0..50.0);
+    let y = rng.random_range(-SEED_LIMIT..SEED_LIMIT);
 
-    let texture = asset_server.load("sprites/pipe.png");
+    let pipe_half_height = PIPE_SIZE.y / 2.0;
+
+    let mut sprite = Sprite::from_image(asset_server.load("sprites/pipe.png"));
 
     commands.spawn((
         Pipe,
         ApproachingPipe,
         Scroll,
         DespawnOnReset,
-        Sprite::from_image(texture.clone()),
-        Transform::from_xyz(PIPE_SPAWN_OFFSET, y - 160.0, PIPE_Z),
+        sprite.clone(),
+        Transform::from_xyz(PIPE_SPAWN_OFFSET, y - pipe_half_height, PIPE_Z),
     ));
+
+    sprite.flip_y = true;
 
     commands.spawn((
         Pipe,
         Scroll,
         DespawnOnReset,
-        Sprite {
-            image: texture.clone(),
-            flip_y: true,
-            ..Default::default()
-        },
-        Transform::from_xyz(PIPE_SPAWN_OFFSET, y + 160.0 + GAP_HEIGHT, PIPE_Z),
+        sprite,
+        Transform::from_xyz(PIPE_SPAWN_OFFSET, y + pipe_half_height + GAP_HEIGHT, PIPE_Z),
     ));
 }
 

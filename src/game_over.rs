@@ -1,4 +1,4 @@
-use crate::{cleanup, has_user_input, GameState, UI_Z};
+use crate::{cleanup, game::UI_Z, has_user_input, GameState};
 use bevy::prelude::*;
 
 pub struct GameOverPlugin;

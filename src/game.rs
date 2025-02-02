@@ -1,7 +1,6 @@
-use super::BIRD_Z;
-use crate::{game_over::DespawnOnReset, has_user_input, GameState, Ground, Scroll, GROUND_WIDTH};
-use crate::{AudioHandles, BIRD_SIZE};
 use bevy::prelude::*;
+
+use crate::{game_over::DespawnOnReset, has_user_input, AudioHandles, GameState, Ground, Scroll};
 use bird::Bird;
 
 mod bird;
@@ -17,6 +16,15 @@ const PIPE_SPAWN_OFFSET: f32 = 180.0;
 const PIPE_SPAWN_TIME: f32 = 4.0;
 const GAP_HEIGHT: f32 = 100.0;
 const BIRD_ANIMATION_SPEED: f32 = 10.0;
+const PIPE_Z: f32 = 1.0;
+const BIRD_Z: f32 = 3.0;
+const SEED_LIMIT: f32 = 50.0;
+pub(crate) const GROUND_Z: f32 = 2.0;
+pub(crate) const UI_Z: f32 = 4.0;
+pub(crate) const GROUND_WIDTH: f32 = 336.0;
+
+const BIRD_SIZE: Vec2 = Vec2::new(34.0, 24.0);
+const PIPE_SIZE: Vec2 = Vec2::new(52.0, 320.0);
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 enum PlayState {
@@ -98,9 +106,8 @@ fn game_setup(
     asset_server: Res<AssetServer>,
 ) {
     // Load the bird sprite sheet and create a texture atlas from it
-    let bird_size = UVec2::new(BIRD_SIZE.x as _, BIRD_SIZE.y as _);
-    let atlas_layout =
-        texture_atlases.add(TextureAtlasLayout::from_grid(bird_size, 4, 1, None, None));
+    let size = UVec2::new(BIRD_SIZE.x as _, BIRD_SIZE.y as _);
+    let atlas_layout = texture_atlases.add(TextureAtlasLayout::from_grid(size, 4, 1, None, None));
 
     // Spawn the bird
     commands.spawn((
@@ -108,10 +115,7 @@ fn game_setup(
         DespawnOnReset,
         Sprite::from_atlas_image(
             asset_server.load("sprites/bird.png"),
-            TextureAtlas {
-                layout: atlas_layout,
-                index: 0,
-            },
+            TextureAtlas::from(atlas_layout),
         ),
         Transform::from_xyz(0.0, 0.0, BIRD_Z),
     ));
@@ -143,12 +147,10 @@ fn game_setup(
 
 // Set the score text to display the current score
 fn update_score_text(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {
-    if !score.is_changed() {
-        return;
-    }
-
-    for mut text in &mut query {
-        text.0 = score.0.to_string();
+    if score.is_changed() {
+        for mut text in &mut query {
+            text.0 = score.0.to_string();
+        }
     }
 }
 

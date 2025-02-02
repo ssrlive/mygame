@@ -1,5 +1,4 @@
-use super::UI_Z;
-use crate::{cleanup, has_user_input, GameState};
+use crate::{cleanup, game::UI_Z, has_user_input, GameState};
 use bevy::prelude::*;
 
 pub struct MenuPlugin;
