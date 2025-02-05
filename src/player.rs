@@ -2,7 +2,6 @@ use bevy::{
     math::bounding::{Aabb2d, IntersectsVolume},
     prelude::*,
 };
-// use bevy_inspector_egui::Inspectable;
 
 use crate::{
     ascii::{spawn_ascii_sprite, AsciiSheet},
@@ -20,7 +19,6 @@ pub struct EncounterTracker {
     timer: Timer,
 }
 
-// #[derive(Component, Inspectable)]
 #[derive(Component)]
 pub struct Player {
     speed: f32,

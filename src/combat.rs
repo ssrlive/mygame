@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-// use bevy_inspector_egui::Inspectable;
 
 use crate::{
     ascii::{
@@ -11,7 +10,6 @@ use crate::{
     GameState, RESOLUTION, TILE_SIZE,
 };
 
-// #[derive(Component, Inspectable)]
 #[derive(Component)]
 pub struct CombatStats {
     //XXX does this need isize, combat does a subtract but I max it
