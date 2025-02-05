@@ -67,7 +67,7 @@ pub fn spawn_ascii_text(
     to_print: &str,
     left_center: Vec3,
 ) -> Entity {
-    let color = Color::rgb(0.8, 0.8, 0.8);
+    let color = Color::srgb(0.8, 0.8, 0.8);
 
     let mut character_sprites = Vec::new();
     for (i, char) in to_print.chars().enumerate() {
@@ -93,7 +93,7 @@ pub fn spawn_ascii_text(
             GlobalTransform::default(),
             AsciiText,
         ))
-        .push_children(&character_sprites)
+        .add_children(&character_sprites)
         .id()
 }
 
@@ -110,7 +110,7 @@ pub fn spawn_nine_slice(
     assert!(width >= 2.0);
     assert!(height >= 2.0);
 
-    let color = Color::rgb(0.3, 0.3, 0.9);
+    let color = Color::srgb(0.3, 0.3, 0.9);
     let mut sprites = Vec::new();
 
     let left = (-width / 2.0 + 0.5) * TILE_SIZE;
@@ -205,13 +205,11 @@ pub fn spawn_nine_slice(
 fn load_ascii(
     mut commands: Commands,
     assets: Res<AssetServer>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let image = assets.load("Ascii.png");
-    let atlas =
-        TextureAtlas::from_grid_with_padding(image, Vec2::splat(9.0), 16, 16, Vec2::splat(2.0));
-
+    let atlas = TextureAtlasLayout::from_grid(UVec2::splat(9), 16, 16, Some(UVec2::splat(2)), None);
     let atlas_handle = texture_atlases.add(atlas);
-
-    commands.insert_resource(AsciiSheet(atlas_handle));
+    let sprite = Sprite::from_atlas_image(image, atlas_handle.into());
+    commands.insert_resource(AsciiSheet(sprite));
 }

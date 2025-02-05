@@ -1,9 +1,8 @@
+use bevy::prelude::*;
 use std::{
     fs::File,
     io::{BufRead, BufReader},
 };
-
-use bevy::prelude::*;
 
 use crate::{
     ascii::{spawn_ascii_sprite, AsciiSheet},
@@ -23,9 +22,9 @@ pub struct TileCollider;
 
 impl Plugin for TileMapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(create_simple_map)
-            .add_system_set(SystemSet::on_enter(GameState::Overworld).with_system(show_map))
-            .add_system_set(SystemSet::on_exit(GameState::Overworld).with_system(hide_map));
+        app.add_systems(Startup, create_simple_map)
+            .add_systems(OnEnter(GameState::Overworld), show_map)
+            .add_systems(OnExit(GameState::Overworld), hide_map);
     }
 }
 
@@ -36,7 +35,7 @@ fn hide_map(
     if let Ok(children) = children_query.get_single() {
         for child in children.iter() {
             if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
-                child_vis.is_visible = false;
+                *child_vis = Visibility::Hidden;
             }
         }
     }
@@ -49,7 +48,7 @@ fn show_map(
     if let Ok(children) = children_query.get_single() {
         for child in children.iter() {
             if let Ok(mut child_vis) = child_visibility_query.get_mut(*child) {
-                child_vis.is_visible = true;
+                *child_vis = Visibility::Visible;
             }
         }
     }
@@ -66,7 +65,7 @@ fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
                     &mut commands,
                     &ascii,
                     char as usize,
-                    Color::rgb(0.9, 0.9, 0.9),
+                    Color::srgb(0.9, 0.9, 0.9),
                     Vec3::new(x as f32 * TILE_SIZE, -(y as f32) * TILE_SIZE, 100.0),
                     Vec3::splat(1.0),
                 );

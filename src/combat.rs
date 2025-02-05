@@ -16,6 +16,7 @@ use crate::{
 pub struct CombatStats {
     //XXX does this need isize, combat does a subtract but I max it
     pub health: isize,
+    #[allow(dead_code)]
     pub max_health: isize,
     pub attack: isize,
     pub defense: isize,
@@ -247,6 +248,7 @@ fn combat_damage_calc(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn combat_input(
     mut commands: Commands,
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -267,10 +269,10 @@ fn combat_input(
     //TODO handle multiple enemies
     let enemy = enemy_query.single();
     let mut new_selection = menu_state.selected as isize;
-    if keyboard.just_pressed(KeyCode::KeyA) {
+    if keyboard.just_pressed(KeyCode::KeyA) || keyboard.pressed(KeyCode::ArrowLeft) {
         new_selection -= 1;
     }
-    if keyboard.just_pressed(KeyCode::KeyD) {
+    if keyboard.just_pressed(KeyCode::KeyD) || keyboard.pressed(KeyCode::ArrowRight) {
         new_selection += 1;
     }
     new_selection = (new_selection + NUM_MENU_OPTIONS) % NUM_MENU_OPTIONS;
