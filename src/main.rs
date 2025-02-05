@@ -20,8 +20,9 @@ use fadeout::FadeoutPlugin;
 use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, States, Default)]
 pub enum GameState {
+    #[default]
     Overworld,
     Combat,
 }

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::Inspectable;
+// use bevy_inspector_egui::Inspectable;
 
 use crate::{
     ascii::{
@@ -11,7 +11,8 @@ use crate::{
     GameState, RESOLUTION, TILE_SIZE,
 };
 
-#[derive(Component, Inspectable)]
+// #[derive(Component, Inspectable)]
+#[derive(Component)]
 pub struct CombatStats {
     //XXX does this need isize, combat does a subtract but I max it
     pub health: isize,
@@ -23,6 +24,7 @@ pub struct CombatStats {
 #[derive(Component)]
 pub struct Enemy;
 
+#[derive(Event)]
 struct FightEvent {
     target: Entity,
     damage_amount: isize,
@@ -31,8 +33,9 @@ struct FightEvent {
 
 pub struct CombatPlugin;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, States, Default)]
 pub enum CombatState {
+    #[default]
     PlayerTurn,
     EnemyTurn(bool),
     Exiting,
@@ -41,37 +44,35 @@ pub enum CombatState {
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<FightEvent>()
-            .add_state(CombatState::PlayerTurn)
+            .init_state::<CombatState>()
             //TODO reset
             .insert_resource(CombatMenuSelection {
                 selected: CombatMenuOption::Fight,
             })
-            .add_system_set(
-                SystemSet::on_update(CombatState::EnemyTurn(false)).with_system(process_enemy_turn),
+            .add_systems(
+                Update,
+                process_enemy_turn.run_if(in_state(CombatState::EnemyTurn(false))),
             )
-            .add_system_set(
-                SystemSet::on_update(GameState::Combat)
-                    .with_system(combat_input)
-                    .with_system(combat_camera)
-                    .with_system(highlight_combat_buttons)
-                    .with_system(combat_damage_calc),
+            .add_systems(
+                Update,
+                (
+                    combat_input,
+                    combat_camera,
+                    highlight_combat_buttons,
+                    combat_damage_calc,
+                )
+                    .run_if(in_state(GameState::Combat)),
             )
-            .add_system_set(
-                SystemSet::on_enter(GameState::Combat)
-                    .with_system(set_starting_state)
-                    .with_system(spawn_enemy)
-                    .with_system(spawn_combat_menu),
+            .add_systems(
+                OnEnter(GameState::Combat),
+                (set_starting_state, spawn_enemy, spawn_combat_menu),
             )
-            .add_system_set(
-                SystemSet::on_exit(GameState::Combat)
-                    .with_system(despawn_enemy)
-                    .with_system(despawn_menu),
-            );
+            .add_systems(OnExit(GameState::Combat), (despawn_enemy, despawn_menu));
     }
 }
 
-fn set_starting_state(mut state: ResMut<State<CombatState>>) {
-    let _ = state.set(CombatState::PlayerTurn);
+fn set_starting_state(mut state: ResMut<NextState<CombatState>>) {
+    state.set(CombatState::PlayerTurn);
 }
 
 const NUM_MENU_OPTIONS: isize = 2;
@@ -81,13 +82,14 @@ pub enum CombatMenuOption {
     Run,
 }
 
+#[derive(Resource)]
 pub struct CombatMenuSelection {
     selected: CombatMenuOption,
 }
 
 fn process_enemy_turn(
     mut fight_event: EventWriter<FightEvent>,
-    mut combat_state: ResMut<State<CombatState>>,
+    mut combat_state: ResMut<NextState<CombatState>>,
     enemy_query: Query<&CombatStats, With<Enemy>>,
     player_query: Query<Entity, With<Player>>,
 ) {
@@ -98,7 +100,7 @@ fn process_enemy_turn(
         damage_amount: enemy_stats.attack,
         next_state: CombatState::PlayerTurn,
     });
-    combat_state.set(CombatState::EnemyTurn(true)).unwrap();
+    combat_state.set(CombatState::EnemyTurn(true));
 }
 
 fn despawn_menu(mut commands: Commands, button_query: Query<Entity, With<CombatMenuOption>>) {
@@ -111,7 +113,7 @@ fn highlight_combat_buttons(
     menu_state: Res<CombatMenuSelection>,
     button_query: Query<(&Children, &CombatMenuOption)>,
     nine_slice_query: Query<&Children, With<NineSlice>>,
-    mut sprites_query: Query<&mut TextureAtlasSprite>,
+    mut sprites_query: Query<&mut Sprite>,
 ) {
     for (button_children, button_id) in button_query.iter() {
         for button_child in button_children.iter() {
@@ -119,7 +121,7 @@ fn highlight_combat_buttons(
                 for nine_slice_child in nine_slice_children.iter() {
                     if let Ok(mut sprite) = sprites_query.get_mut(*nine_slice_child) {
                         if menu_state.selected == *button_id {
-                            sprite.color = Color::RED;
+                            sprite.color = bevy::color::palettes::css::RED.into();
                         } else {
                             sprite.color = Color::WHITE;
                         }
@@ -145,14 +147,12 @@ fn spawn_combat_button(
     let fight_text = spawn_ascii_text(commands, ascii, text, Vec3::new(x_offset, 0.0, 0.0));
 
     commands
-        .spawn()
-        .insert(Transform {
-            translation: translation,
-            ..Default::default()
-        })
-        .insert(GlobalTransform::default())
-        .insert(Name::new("Button"))
-        .insert(id)
+        .spawn((
+            Transform::from_translation(translation),
+            GlobalTransform::default(),
+            Name::new("Button"),
+            id,
+        ))
         .add_child(fight_text)
         .add_child(fight_nine_slice)
         .id()
@@ -202,9 +202,9 @@ fn combat_damage_calc(
     mut enemy_query: Query<(&Children, &mut CombatStats)>,
     ascii: Res<AsciiSheet>,
     text_query: Query<&AsciiText>,
-    mut combat_state: ResMut<State<CombatState>>,
+    mut combat_state: ResMut<NextState<CombatState>>,
 ) {
-    if let Some(fight_event) = fight_event.iter().next() {
+    if let Some(fight_event) = fight_event.read().next() {
         //Get target stats and children
         let (target_children, mut stats) = enemy_query
             .get_mut(fight_event.target)
@@ -240,24 +240,25 @@ fn combat_damage_calc(
         //FIXME should create fadeout!
         if stats.health == 0 {
             create_fadeout(&mut commands, GameState::Overworld, &ascii);
-            combat_state.set(CombatState::Exiting).unwrap();
+            combat_state.set(CombatState::Exiting);
         } else {
-            combat_state.set(fight_event.next_state).unwrap();
+            combat_state.set(fight_event.next_state);
         }
     }
 }
 
 fn combat_input(
     mut commands: Commands,
-    keyboard: Res<Input<KeyCode>>,
+    keyboard: Res<ButtonInput<KeyCode>>,
     player_query: Query<&CombatStats, With<Player>>,
     enemy_query: Query<Entity, With<Enemy>>,
     mut fight_event: EventWriter<FightEvent>,
     mut menu_state: ResMut<CombatMenuSelection>,
-    mut combat_state: ResMut<State<CombatState>>,
+    combat_state: ResMut<State<CombatState>>,
+    mut next_combat_state: ResMut<NextState<CombatState>>,
     ascii: Res<AsciiSheet>,
 ) {
-    if combat_state.current() != &CombatState::PlayerTurn {
+    if combat_state.get() != &CombatState::PlayerTurn {
         return;
     }
 
@@ -266,10 +267,10 @@ fn combat_input(
     //TODO handle multiple enemies
     let enemy = enemy_query.single();
     let mut new_selection = menu_state.selected as isize;
-    if keyboard.just_pressed(KeyCode::A) {
+    if keyboard.just_pressed(KeyCode::KeyA) {
         new_selection -= 1;
     }
-    if keyboard.just_pressed(KeyCode::D) {
+    if keyboard.just_pressed(KeyCode::KeyD) {
         new_selection += 1;
     }
     new_selection = (new_selection + NUM_MENU_OPTIONS) % NUM_MENU_OPTIONS;
@@ -282,15 +283,17 @@ fn combat_input(
 
     if keyboard.just_pressed(KeyCode::Space) {
         match menu_state.selected {
-            CombatMenuOption::Fight => fight_event.send(FightEvent {
-                //TODO select enemy and attack type
-                target: enemy,
-                damage_amount: player_combat.attack,
-                next_state: CombatState::EnemyTurn(false),
-            }),
+            CombatMenuOption::Fight => {
+                fight_event.send(FightEvent {
+                    //TODO select enemy and attack type
+                    target: enemy,
+                    damage_amount: player_combat.attack,
+                    next_state: CombatState::EnemyTurn(false),
+                });
+            }
             CombatMenuOption::Run => {
                 create_fadeout(&mut commands, GameState::Overworld, &ascii);
-                combat_state.set(CombatState::Exiting).unwrap()
+                next_combat_state.set(CombatState::Exiting);
             }
         }
     }
@@ -315,7 +318,7 @@ fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
         &mut commands,
         &ascii,
         'b' as usize,
-        Color::rgb(0.8, 0.8, 0.8),
+        Color::srgb(0.8, 0.8, 0.8),
         Vec3::new(0.0, -0.1, 100.0),
         Vec3::splat(3.0),
     );

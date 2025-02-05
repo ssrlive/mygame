@@ -82,10 +82,11 @@ fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
     }
 
     commands
-        .spawn()
-        .insert(Map)
-        .insert(Name::new("Map"))
-        .insert(Transform::default())
-        .insert(GlobalTransform::default())
-        .push_children(&tiles);
+        .spawn((
+            Map,
+            Name::new("Map"),
+            Transform::default(),
+            GlobalTransform::default(),
+        ))
+        .add_children(&tiles);
 }
