@@ -82,6 +82,7 @@ fn create_simple_map(mut commands: Commands, ascii: Res<AsciiSheet>) {
 
     commands
         .spawn((
+            Visibility::default(),
             Map,
             Name::new("Map"),
             Transform::default(),

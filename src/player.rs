@@ -24,12 +24,12 @@ pub struct Player {
     speed: f32,
     active: bool,
     just_moved: bool,
+    pub exp: usize,
 }
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player)
-            .add_systems(OnEnter(GameState::Overworld), show_player)
+        app.add_systems(OnEnter(GameState::Overworld), show_player)
             .add_systems(OnExit(GameState::Overworld), hide_player)
             .add_systems(
                 Update,
@@ -39,7 +39,8 @@ impl Plugin for PlayerPlugin {
                     camera_follow.after(player_movement),
                 )
                     .run_if(in_state(GameState::Overworld)),
-            );
+            )
+            .add_systems(Startup, spawn_player);
     }
 }
 
@@ -190,6 +191,7 @@ fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>) {
             speed: 3.0,
             active: true,
             just_moved: false,
+            exp: 0,
         })
         .insert(EncounterTracker {
             timer: Timer::from_seconds(1.0, TimerMode::Repeating),

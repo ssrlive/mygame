@@ -9,16 +9,20 @@ pub const RESOLUTION: f32 = 16.0 / 9.0;
 pub const TILE_SIZE: f32 = 0.1;
 
 mod ascii;
+mod audio;
 mod combat;
 mod debug;
 mod fadeout;
+mod graphics;
 mod player;
 mod tilemap;
 
 use ascii::AsciiPlugin;
+use audio::GameAudioPlugin;
 use combat::CombatPlugin;
 use debug::DebugPlugin;
 use fadeout::FadeoutPlugin;
+use graphics::GraphicsPlugin;
 use player::PlayerPlugin;
 use tilemap::TileMapPlugin;
 
@@ -52,6 +56,8 @@ fn main() {
         .add_systems(Startup, spawn_camera)
         .add_plugins((
             PlayerPlugin,
+            GameAudioPlugin,
+            GraphicsPlugin,
             CombatPlugin,
             FadeoutPlugin,
             AsciiPlugin,

@@ -1,11 +1,9 @@
 use bevy::prelude::*;
 
 use crate::{
-    ascii::{
-        spawn_ascii_sprite, spawn_ascii_text, spawn_nine_slice, AsciiSheet, AsciiText, NineSlice,
-        NineSliceIndices,
-    },
+    ascii::{spawn_ascii_text, spawn_nine_slice, AsciiSheet, NineSlice, NineSliceIndices},
     fadeout::create_fadeout,
+    graphics::{spawn_bat_sprite, CharacterSheet},
     player::Player,
     GameState, RESOLUTION, TILE_SIZE,
 };
@@ -24,7 +22,7 @@ pub struct CombatStats {
 pub struct Enemy;
 
 #[derive(Event)]
-struct FightEvent {
+pub struct FightEvent {
     target: Entity,
     damage_amount: isize,
     next_state: CombatState,
@@ -36,15 +34,34 @@ pub struct CombatPlugin;
 pub enum CombatState {
     #[default]
     PlayerTurn,
+    PlayerAttack,
     EnemyTurn(bool),
+    EnemyAttack,
+    Reward,
     Exiting,
 }
+
+#[derive(Resource)]
+pub struct AttackEffects {
+    timer: Timer,
+    flash_speed: f32,
+    screen_shake_amount: f32,
+    current_shake: f32,
+}
+
+#[derive(Component)]
+pub struct CombatText;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<FightEvent>()
             .init_state::<CombatState>()
-            //TODO reset
+            .insert_resource(AttackEffects {
+                timer: Timer::from_seconds(0.7, TimerMode::Repeating),
+                flash_speed: 0.1,
+                screen_shake_amount: 0.1,
+                current_shake: 0.0,
+            })
             .insert_resource(CombatMenuSelection {
                 selected: CombatMenuOption::Fight,
             })
@@ -64,9 +81,114 @@ impl Plugin for CombatPlugin {
             )
             .add_systems(
                 OnEnter(GameState::Combat),
-                (set_starting_state, spawn_enemy, spawn_combat_menu),
+                (
+                    set_starting_state,
+                    spawn_enemy,
+                    spawn_player_health,
+                    spawn_combat_menu,
+                ),
             )
-            .add_systems(OnExit(GameState::Combat), (despawn_enemy, despawn_menu));
+            .add_systems(
+                OnExit(GameState::Combat),
+                (despawn_all_combat_text, despawn_enemy, despawn_menu),
+            )
+            .add_systems(
+                Update,
+                handle_attack_effects.run_if(in_state(CombatState::PlayerAttack)),
+            )
+            .add_systems(OnEnter(CombatState::Reward), (give_reward, despawn_enemy))
+            .add_systems(
+                Update,
+                handle_accepting_reward.run_if(in_state(CombatState::Reward)),
+            )
+            .add_systems(
+                Update,
+                handle_attack_effects.run_if(in_state(CombatState::EnemyAttack)),
+            );
+    }
+}
+
+fn handle_accepting_reward(
+    mut commands: Commands,
+    ascii: Res<AsciiSheet>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+) {
+    if keyboard.just_pressed(KeyCode::Space) {
+        create_fadeout(&mut commands, GameState::Overworld, &ascii);
+    }
+}
+
+fn give_reward(
+    mut commands: Commands,
+    ascii: Res<AsciiSheet>,
+    mut player_query: Query<&mut Player>,
+    mut keyboard: ResMut<ButtonInput<KeyCode>>,
+) {
+    keyboard.clear();
+    //TODO come based on enemies killed
+    let exp_reward = 10;
+    let reward_text = format!("Earned: {} exp", exp_reward);
+    let text = spawn_ascii_text(
+        &mut commands,
+        &ascii,
+        &reward_text,
+        Vec3::new(-((reward_text.len() / 2) as f32 * TILE_SIZE), 0.0, 0.0),
+    );
+    commands.entity(text).insert(CombatText);
+    player_query.single_mut().exp += exp_reward;
+}
+
+fn despawn_all_combat_text(mut commands: Commands, text_query: Query<Entity, With<CombatText>>) {
+    for entity in text_query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+}
+
+fn spawn_player_health(
+    mut commands: Commands,
+    ascii: Res<AsciiSheet>,
+    player_query: Query<(Entity, &CombatStats, &Transform), With<Player>>,
+) {
+    let (player, stats, transform) = player_query.single();
+    let health_text = format!("Health: {}", stats.health);
+    let text = spawn_ascii_text(
+        &mut commands,
+        &ascii,
+        &health_text,
+        Vec3::new(-RESOLUTION + TILE_SIZE, -1.0 + TILE_SIZE, 0.0) - transform.translation,
+    );
+    commands.entity(text).insert(CombatText);
+    commands.entity(player).add_child(text);
+}
+
+fn handle_attack_effects(
+    mut attack_fx: ResMut<AttackEffects>,
+    time: Res<Time>,
+    mut enemy_graphics_query: Query<&mut Visibility, With<Enemy>>,
+    state: ResMut<State<CombatState>>,
+    mut next_state: ResMut<NextState<CombatState>>,
+) {
+    attack_fx.timer.tick(time.delta());
+    let mut enemy_sprite = enemy_graphics_query.iter_mut().next().unwrap();
+
+    if state.get() == &CombatState::PlayerAttack {
+        if attack_fx.timer.elapsed_secs() % attack_fx.flash_speed > attack_fx.flash_speed / 2.0 {
+            *enemy_sprite = Visibility::Hidden;
+        } else {
+            *enemy_sprite = Visibility::Visible;
+        }
+    } else {
+        attack_fx.current_shake = attack_fx.screen_shake_amount
+            * f32::sin(attack_fx.timer.fraction() * 2.0 * std::f32::consts::PI);
+    }
+
+    if attack_fx.timer.just_finished() {
+        *enemy_sprite = Visibility::Visible;
+        if state.get() == &CombatState::PlayerAttack {
+            next_state.set(CombatState::EnemyTurn(false));
+        } else {
+            next_state.set(CombatState::PlayerTurn);
+        }
     }
 }
 
@@ -97,7 +219,7 @@ fn process_enemy_turn(
     fight_event.send(FightEvent {
         target: player_ent,
         damage_amount: enemy_stats.attack,
-        next_state: CombatState::PlayerTurn,
+        next_state: CombatState::EnemyAttack,
     });
     combat_state.set(CombatState::EnemyTurn(true));
 }
@@ -151,6 +273,7 @@ fn spawn_combat_button(
             GlobalTransform::default(),
             Name::new("Button"),
             id,
+            Visibility::default(),
         ))
         .add_child(fight_text)
         .add_child(fight_nine_slice)
@@ -200,7 +323,7 @@ fn combat_damage_calc(
     //Not necssacarily enemy
     mut enemy_query: Query<(&Children, &mut CombatStats)>,
     ascii: Res<AsciiSheet>,
-    text_query: Query<&AsciiText>,
+    text_query: Query<&Transform, With<CombatText>>,
     mut combat_state: ResMut<NextState<CombatState>>,
 ) {
     if let Some(fight_event) = fight_event.read().next() {
@@ -218,7 +341,7 @@ fn combat_damage_calc(
         //Update health
         for child in target_children.iter() {
             //See if this child is the health text
-            if text_query.get(*child).is_ok() {
+            if let Ok(transform) = text_query.get(*child) {
                 //Delete old text
                 commands.entity(*child).despawn_recursive();
                 //Create new text
@@ -227,19 +350,17 @@ fn combat_damage_calc(
                     &ascii,
                     &format!("Health: {}", stats.health as usize),
                     //relative to enemy pos
-                    Vec3::new(-4.5 * TILE_SIZE, 2.0 * TILE_SIZE, 100.0),
+                    transform.translation,
                 );
-
+                commands.entity(new_health).insert(CombatText);
                 commands.entity(fight_event.target).add_child(new_health);
             }
         }
 
         //Kill enemy if dead
         //TODO support multiple enemies
-        //FIXME should create fadeout!
         if stats.health == 0 {
-            create_fadeout(&mut commands, GameState::Overworld, &ascii);
-            combat_state.set(CombatState::Exiting);
+            combat_state.set(CombatState::Reward);
         } else {
             combat_state.set(fight_event.next_state);
         }
@@ -288,7 +409,7 @@ fn combat_input(
                     //TODO select enemy and attack type
                     target: enemy,
                     damage_amount: player_combat.attack,
-                    next_state: CombatState::EnemyTurn(false),
+                    next_state: CombatState::PlayerAttack,
                 });
             }
             CombatMenuOption::Run => {
@@ -299,29 +420,26 @@ fn combat_input(
     }
 }
 
-fn combat_camera(mut camera_query: Query<&mut Transform, With<Camera>>) {
+fn combat_camera(
+    mut camera_query: Query<&mut Transform, With<Camera>>,
+    attack_fx: Res<AttackEffects>,
+) {
     let mut camera_transform = camera_query.single_mut();
-    camera_transform.translation.x = 0.0;
+    camera_transform.translation.x = attack_fx.current_shake;
     camera_transform.translation.y = 0.0;
 }
 
-fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>) {
+fn spawn_enemy(mut commands: Commands, ascii: Res<AsciiSheet>, characters: Res<CharacterSheet>) {
     let enemy_health = 3;
     let health_text = spawn_ascii_text(
         &mut commands,
         &ascii,
         &format!("Health: {}", enemy_health as usize),
         //relative to enemy pos
-        Vec3::new(-4.5 * TILE_SIZE, 2.0 * TILE_SIZE, 100.0),
+        Vec3::new(-4.5 * TILE_SIZE, 0.5, 100.0),
     );
-    let sprite = spawn_ascii_sprite(
-        &mut commands,
-        &ascii,
-        'b' as usize,
-        Color::srgb(0.8, 0.8, 0.8),
-        Vec3::new(0.0, -0.1, 100.0),
-        Vec3::splat(3.0),
-    );
+    commands.entity(health_text).insert(CombatText);
+    let sprite = spawn_bat_sprite(&mut commands, &characters, Vec3::new(0.0, 0.3, 100.0));
     commands
         .entity(sprite)
         .insert(Enemy)

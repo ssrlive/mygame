@@ -92,6 +92,7 @@ pub fn spawn_ascii_text(
             },
             GlobalTransform::default(),
             AsciiText,
+            Visibility::default(),
         ))
         .add_children(&character_sprites)
         .id()
@@ -197,6 +198,7 @@ pub fn spawn_nine_slice(
             Name::new("NineSpriteBox"),
             Transform::default(),
             GlobalTransform::default(),
+            Visibility::default(),
         ))
         .add_children(&sprites)
         .id()
