@@ -74,9 +74,6 @@ fn main() {
         .run();
 }
 
-#[derive(Component)]
-pub struct MainCamera;
-
 fn spawn_camera(mut commands: Commands) {
     let projection = OrthographicProjection {
         area: Rect {
@@ -90,5 +87,5 @@ fn spawn_camera(mut commands: Commands) {
         ..OrthographicProjection::default_2d()
     };
 
-    commands.spawn((Camera2d, projection, MainCamera));
+    commands.spawn((Camera2d, projection));
 }

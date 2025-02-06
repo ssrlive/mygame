@@ -12,7 +12,6 @@ use crate::{
 pub struct CombatStats {
     //XXX does this need isize, combat does a subtract but I max it
     pub health: isize,
-    #[allow(dead_code)]
     pub max_health: isize,
     pub attack: isize,
     pub defense: isize,
@@ -112,8 +111,10 @@ fn handle_accepting_reward(
     mut commands: Commands,
     ascii: Res<AsciiSheet>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    mut combat_state: ResMut<NextState<CombatState>>,
 ) {
     if keyboard.just_pressed(KeyCode::Space) {
+        combat_state.set(CombatState::Exiting);
         create_fadeout(&mut commands, GameState::Overworld, &ascii);
     }
 }
@@ -421,7 +422,7 @@ fn combat_input(
 }
 
 fn combat_camera(
-    mut camera_query: Query<&mut Transform, With<Camera>>,
+    mut camera_query: Query<&mut Transform, With<Camera2d>>,
     attack_fx: Res<AttackEffects>,
 ) {
     let mut camera_transform = camera_query.single_mut();

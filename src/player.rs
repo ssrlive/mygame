@@ -67,6 +67,7 @@ fn show_player(
     mut child_visibility_query: Query<&mut Visibility, Without<Player>>,
 ) {
     let Ok((mut player, mut player_vis)) = player_query.get_single_mut() else {
+        bevy::log::info!("No player found");
         return;
     };
     player.active = true;
@@ -186,6 +187,7 @@ fn spawn_player(mut commands: Commands, ascii: Res<AsciiSheet>) {
 
     let _ = commands
         .entity(player)
+        .insert(Visibility::Hidden)
         .insert(Name::new("Player"))
         .insert(Player {
             speed: 3.0,

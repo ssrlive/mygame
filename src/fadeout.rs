@@ -14,7 +14,22 @@ struct ScreenFade {
 
 impl Plugin for FadeoutPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, fadeout);
+        app.add_systems(Update, (fadeout, ui_fadeout));
+    }
+}
+
+fn ui_fadeout(
+    fade_query: Query<&ScreenFade>,
+    mut ui_query: Query<&mut BackgroundColor>,
+    mut text_query: Query<(&mut Text, &mut TextColor)>,
+) {
+    if let Some(fade) = fade_query.iter().next() {
+        for mut ui_color in ui_query.iter_mut() {
+            ui_color.0.set_alpha(1.0 - fade.alpha);
+        }
+        for (_text, mut color) in text_query.iter_mut() {
+            color.0.set_alpha(1.0 - fade.alpha);
+        }
     }
 }
 

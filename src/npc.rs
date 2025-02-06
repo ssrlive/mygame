@@ -4,7 +4,7 @@ use crate::{
     ascii::{spawn_ascii_sprite, spawn_ascii_text, spawn_nine_slice, AsciiSheet, NineSliceIndices},
     combat::CombatStats,
     player::Player,
-    GameState, MainCamera, CLEAR, TILE_SIZE,
+    GameState, CLEAR, TILE_SIZE,
 };
 
 pub struct NpcPlugin;
@@ -30,10 +30,11 @@ fn clear_speech(
     mut commands: Commands,
     mut player_query: Query<&mut Player>,
     speech_query: Query<Entity, With<NpcText>>,
-    keyboard: Res<ButtonInput<KeyCode>>,
+    mut keyboard: ResMut<ButtonInput<KeyCode>>,
 ) {
-    let mut player = player_query.single_mut();
     if keyboard.any_just_pressed([KeyCode::KeyE, KeyCode::Space]) {
+        keyboard.clear();
+        let mut player = player_query.single_mut();
         for ent in speech_query.iter() {
             player.active = true;
             commands.entity(ent).despawn_recursive();
@@ -79,24 +80,24 @@ fn spawn_textbox(
 fn npc_speech(
     mut commands: Commands,
     mut player_query: Query<(&mut Player, &mut CombatStats, &Transform)>,
-    camera_query: Query<&Transform, With<MainCamera>>,
+    camera_query: Query<&Transform, With<Camera2d>>,
     npc_query: Query<(&Npc, &Transform)>,
-    keyboard: Res<ButtonInput<KeyCode>>,
+    mut keyboard: ResMut<ButtonInput<KeyCode>>,
     ascii: Res<AsciiSheet>,
     indices: Res<NineSliceIndices>,
 ) {
     let (mut player, mut stats, transform) = player_query.single_mut();
-    let camera_transform = camera_query.single();
     if !player.active {
         return;
     }
 
-    if keyboard.just_pressed(KeyCode::KeyE) {
+    if keyboard.clear_just_pressed(KeyCode::KeyE) {
         for (_npc, npc_transform) in npc_query.iter() {
             let lhs = npc_transform.translation.truncate();
             if Vec2::distance(lhs, transform.translation.truncate()) < TILE_SIZE * 1.5 {
                 player.active = false;
                 stats.health = stats.max_health;
+                let camera_transform = camera_query.single();
 
                 spawn_textbox(
                     &mut commands,
@@ -105,6 +106,7 @@ fn npc_speech(
                     Vec2::new(0.0, 1.0 - 1.5 * TILE_SIZE) + camera_transform.translation.truncate(),
                     "You seem weak, let me heal you!",
                 );
+                break;
             }
         }
     }
