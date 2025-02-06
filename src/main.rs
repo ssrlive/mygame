@@ -14,7 +14,9 @@ mod combat;
 mod debug;
 mod fadeout;
 mod graphics;
+mod npc;
 mod player;
+mod start_menu;
 mod tilemap;
 
 use ascii::AsciiPlugin;
@@ -23,12 +25,15 @@ use combat::CombatPlugin;
 use debug::DebugPlugin;
 use fadeout::FadeoutPlugin;
 use graphics::GraphicsPlugin;
+use npc::NpcPlugin;
 use player::PlayerPlugin;
+use start_menu::MainMenuPlugin;
 use tilemap::TileMapPlugin;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, States, Default)]
 pub enum GameState {
     #[default]
+    StartMenu,
     Overworld,
     Combat,
 }
@@ -60,12 +65,17 @@ fn main() {
             GraphicsPlugin,
             CombatPlugin,
             FadeoutPlugin,
+            NpcPlugin,
             AsciiPlugin,
+            MainMenuPlugin,
             DebugPlugin,
             TileMapPlugin,
         ))
         .run();
 }
+
+#[derive(Component)]
+pub struct MainCamera;
 
 fn spawn_camera(mut commands: Commands) {
     let projection = OrthographicProjection {
@@ -80,5 +90,5 @@ fn spawn_camera(mut commands: Commands) {
         ..OrthographicProjection::default_2d()
     };
 
-    commands.spawn((Camera2d, projection));
+    commands.spawn((Camera2d, projection, MainCamera));
 }
