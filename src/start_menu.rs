@@ -84,7 +84,7 @@ fn spawn_menu(mut commands: Commands, ui_assets: Res<UiAssets>) {
                 margin: UiRect::all(Val::Auto),
                 ..default()
             },
-            BackgroundColor(Color::NONE.into()),
+            BackgroundColor(Color::NONE),
             Visibility::default(),
         ))
         .insert(ButtonActive(true))

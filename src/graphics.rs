@@ -1,45 +1,79 @@
 use bevy::prelude::*;
 
+use crate::combat::EnemyType;
+
 pub struct GraphicsPlugin;
 
 #[derive(Resource)]
 pub struct CharacterSheet {
-    handle: Sprite,
-    bat_frames: [usize; 3],
+    pub handle: Sprite,
+    pub player_up: [usize; 3],
+    pub player_down: [usize; 3],
+    pub player_left: [usize; 3],
+    pub player_right: [usize; 3],
+    pub bat_frames: [usize; 3],
+    pub ghost_frames: [usize; 3],
+}
+
+pub enum FacingDirection {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+#[derive(Component)]
+pub struct PlayerGraphics {
+    pub facing: FacingDirection,
 }
 
 #[derive(Component)]
 pub struct FrameAnimation {
-    timer: Timer,
-    frames: Vec<usize>,
-    current_frame: usize,
+    pub timer: Timer,
+    pub frames: Vec<usize>,
+    pub current_frame: usize,
 }
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, Self::load_graphics)
-            .add_systems(Update, Self::frame_animation);
+            .add_systems(
+                Update,
+                (Self::frame_animation, Self::update_player_graphics),
+            );
     }
 }
 
-pub fn spawn_bat_sprite(
+pub fn spawn_enemy_sprite(
     commands: &mut Commands,
     characters: &CharacterSheet,
     translation: Vec3,
+    enemy_type: EnemyType,
 ) -> Entity {
     let mut sprite = characters.handle.clone();
     if let Some(atlas) = &mut sprite.texture_atlas {
-        atlas.index = characters.bat_frames[0];
+        atlas.index = match enemy_type {
+            EnemyType::Bat => characters.bat_frames[0],
+            EnemyType::Ghost => characters.ghost_frames[0],
+        };
     }
     sprite.custom_size = Some(Vec2::splat(0.5));
-
-    commands
-        .spawn((sprite, Transform::from_translation(translation)))
-        .insert(FrameAnimation {
+    let animation = match enemy_type {
+        EnemyType::Bat => FrameAnimation {
             timer: Timer::from_seconds(0.2, TimerMode::Repeating),
             frames: characters.bat_frames.to_vec(),
             current_frame: 0,
-        })
+        },
+        EnemyType::Ghost => FrameAnimation {
+            timer: Timer::from_seconds(0.2, TimerMode::Repeating),
+            frames: characters.ghost_frames.to_vec(),
+            current_frame: 0,
+        },
+    };
+
+    commands
+        .spawn((sprite, Transform::from_translation(translation)))
+        .insert(animation)
         .id()
 }
 
@@ -53,10 +87,31 @@ impl GraphicsPlugin {
             TextureAtlasLayout::from_grid(UVec2::splat(16), 12, 8, Some(UVec2::splat(2)), None);
         let atlas_handle = texture_atlases.add(atlas);
         let sprite = Sprite::from_atlas_image(assets.load("characters.png"), atlas_handle.into());
+        let columns = 12;
+
         commands.insert_resource(CharacterSheet {
             handle: sprite,
-            bat_frames: [12 * 4 + 3, 12 * 4 + 4, 12 * 4 + 5],
+            player_down: [3, 4, 5],
+            player_left: [columns + 3, columns + 4, columns + 5],
+            player_right: [columns * 2 + 3, columns * 2 + 4, columns * 2 + 5],
+            player_up: [columns * 3 + 3, columns * 3 + 4, columns * 3 + 5],
+            bat_frames: [columns * 4 + 3, columns * 4 + 4, columns * 4 + 5],
+            ghost_frames: [columns * 4 + 6, columns * 4 + 7, columns * 4 + 8],
         });
+    }
+
+    fn update_player_graphics(
+        mut sprites_query: Query<(&PlayerGraphics, &mut FrameAnimation), Changed<PlayerGraphics>>,
+        characters: Res<CharacterSheet>,
+    ) {
+        for (graphics, mut animation) in sprites_query.iter_mut() {
+            animation.frames = match graphics.facing {
+                FacingDirection::Up => characters.player_up.to_vec(),
+                FacingDirection::Down => characters.player_down.to_vec(),
+                FacingDirection::Left => characters.player_left.to_vec(),
+                FacingDirection::Right => characters.player_right.to_vec(),
+            }
+        }
     }
 
     fn frame_animation(
