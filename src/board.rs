@@ -1,6 +1,9 @@
 use crate::pieces::*;
 use bevy::{app::AppExit, prelude::*};
-use bevy_mod_picking::prelude::*;
+use bevy_mod_picking::{
+    prelude::{Deselect, Highlight, HighlightKind, PickSelection, Select},
+    PickableBundle,
+};
 
 #[derive(Component)]
 pub struct Square {
@@ -25,17 +28,16 @@ fn create_board(
     for i in 0..8 {
         for j in 0..8 {
             commands
-                .spawn(PbrBundle {
-                    mesh: mesh.clone(),
+                .spawn((
+                    Mesh3d::from(mesh.clone()),
                     // Change material according to position to get alternating pattern
-                    material: if (Square { x: i, y: j }.is_white()) {
+                    MeshMaterial3d::from(if (Square { x: i, y: j }.is_white()) {
                         materials.white_color.clone()
                     } else {
                         materials.black_color.clone()
-                    },
-                    transform: Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
-                    ..Default::default()
-                })
+                    }),
+                    Transform::from_translation(Vec3::new(i as f32, 0., j as f32)),
+                ))
                 .insert(PickableBundle::default())
                 .insert(RaycastPickTarget::default()) // To mark the entity as pickable for bevy_picking_raycast crate
                 .insert(Highlight {
@@ -47,7 +49,6 @@ fn create_board(
         }
     }
 }
-
 
 #[derive(Resource)]
 struct SquareMaterials {
@@ -64,10 +65,10 @@ impl FromWorld for SquareMaterials {
             .get_resource_mut::<Assets<StandardMaterial>>()
             .unwrap();
         SquareMaterials {
-            highlight_color: materials.add(Color::rgb(0.8, 0.3, 0.3).into()),
-            selected_color: materials.add(Color::rgb(0.9, 0.1, 0.1).into()),
-            black_color: materials.add(Color::rgb(0., 0.1, 0.1).into()),
-            white_color: materials.add(Color::rgb(1., 0.9, 0.9).into()),
+            highlight_color: materials.add(Color::srgb(0.8, 0.3, 0.3).into()),
+            selected_color: materials.add(Color::srgb(0.9, 0.1, 0.1).into()),
+            black_color: materials.add(Color::srgb(0., 0.1, 0.1).into()),
+            white_color: materials.add(Color::srgb(1., 0.9, 0.9).into()),
         }
     }
 }
@@ -251,7 +252,7 @@ fn despawn_taken_pieces(
                     PieceColor::Black => "White",
                 }
             );
-            app_exit_events.send(AppExit);
+            app_exit_events.send(AppExit::Success);
         }
 
         // Despawn piece and children
@@ -268,7 +269,16 @@ impl Plugin for BoardPlugin {
             .init_resource::<PlayerTurn>()
             .add_event::<ResetSelectedEvent>()
             .add_systems(Startup, create_board)
-            .add_systems(Update, (select_square, move_piece, despawn_taken_pieces, select_piece).chain())
+            .add_systems(
+                Update,
+                (
+                    select_square,
+                    move_piece,
+                    despawn_taken_pieces,
+                    select_piece,
+                )
+                    .chain(),
+            )
             .add_systems(Update, reset_selected);
-        }
+    }
 }

@@ -14,6 +14,12 @@ Here's a recording of the game:
 
 ![Chess](./chess.gif)
 
+## Oops
+
+| bevy  | bevy_mod_picking |
+| ----  | ---------------- |
+| 0.14  | 0.20             |
+
 ## License
 
 Bevy Chess is published under a [MIT License](/LICENSE.md).

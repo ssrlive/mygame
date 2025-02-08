@@ -36,18 +36,18 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands
         // Camera
-        .spawn(Camera3dBundle {
-            transform: Transform::from_matrix(Mat4::from_rotation_translation(
+        .spawn((
+            Camera3d::default(),
+            Transform::from_matrix(Mat4::from_rotation_translation(
                 Quat::from_xyzw(-0.3, -0.5, -0.3, 0.5).normalize(),
                 Vec3::new(-7.0, 20.0, 4.0),
             )),
-            ..Default::default()
-        })
+        ))
         .insert(RaycastPickCamera::default()) // Enable picking with this camera
         // Light
         .commands()
-        .spawn(PointLightBundle {
-            transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
-            ..Default::default()
-        });
+        .spawn((
+            PointLight::default(),
+            Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
+        ));
 }

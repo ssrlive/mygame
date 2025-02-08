@@ -386,7 +386,6 @@ fn spawn_king(
         .spawn((
             Visibility::default(),
             Mesh3d::default(),
-            MeshMaterial3d::default(),
             Transform::from_translation(Vec3::new(position.0 as f32, 0., position.1 as f32)),
         ))
         .insert(Piece {
@@ -397,26 +396,18 @@ fn spawn_king(
         })
         // Add children to the parent
         .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh,
-                material: material.clone(),
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., -1.9));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
-            parent.spawn(PbrBundle {
-                mesh: mesh_cross,
-                material,
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., -1.9));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
+            parent.spawn((
+                Mesh3d::from(mesh),
+                MeshMaterial3d::from(material.clone()),
+                Transform::from_translation(Vec3::new(-0.2, 0., -1.9))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
+            parent.spawn((
+                Mesh3d::from(mesh_cross),
+                MeshMaterial3d::from(material),
+                Transform::from_translation(Vec3::new(-0.2, 0., -1.9))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
         });
 }
 
@@ -430,14 +421,11 @@ fn spawn_knight(
 ) {
     commands
         // Spawn parent entity
-        .spawn(PbrBundle {
-            transform: Transform::from_translation(Vec3::new(
-                position.0 as f32,
-                0.,
-                position.1 as f32,
-            )),
-            ..Default::default()
-        })
+        .spawn((
+            Visibility::default(),
+            Mesh3d::default(),
+            Transform::from_translation(Vec3::new(position.0 as f32, 0., position.1 as f32)),
+        ))
         .insert(Piece {
             color: piece_color,
             piece_type: PieceType::Knight,
@@ -446,26 +434,18 @@ fn spawn_knight(
         })
         // Add children to the parent
         .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh: mesh_1,
-                material: material.clone(),
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., 0.9));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
-            parent.spawn(PbrBundle {
-                mesh: mesh_2,
-                material,
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., 0.9));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
+            parent.spawn((
+                Mesh3d::from(mesh_1),
+                MeshMaterial3d::from(material.clone()),
+                Transform::from_translation(Vec3::new(-0.2, 0., 0.9))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
+            parent.spawn((
+                Mesh3d::from(mesh_2),
+                MeshMaterial3d::from(material),
+                Transform::from_translation(Vec3::new(-0.2, 0., 0.9))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
         });
 }
 
@@ -478,14 +458,11 @@ fn spawn_queen(
 ) {
     commands
         // Spawn parent entity
-        .spawn(PbrBundle {
-            transform: Transform::from_translation(Vec3::new(
-                position.0 as f32,
-                0.,
-                position.1 as f32,
-            )),
-            ..Default::default()
-        })
+        .spawn((
+            Visibility::default(),
+            Mesh3d::default(),
+            Transform::from_translation(Vec3::new(position.0 as f32, 0., position.1 as f32)),
+        ))
         .insert(Piece {
             color: piece_color,
             piece_type: PieceType::Queen,
@@ -493,16 +470,12 @@ fn spawn_queen(
             y: position.1,
         })
         .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh,
-                material,
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., -0.95));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
+            parent.spawn((
+                Mesh3d::from(mesh),
+                MeshMaterial3d::from(material),
+                Transform::from_translation(Vec3::new(-0.2, 0., -0.95))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
         });
 }
 
@@ -515,14 +488,11 @@ fn spawn_bishop(
 ) {
     commands
         // Spawn parent entity
-        .spawn(PbrBundle {
-            transform: Transform::from_translation(Vec3::new(
-                position.0 as f32,
-                0.,
-                position.1 as f32,
-            )),
-            ..Default::default()
-        })
+        .spawn((
+            Visibility::default(),
+            Mesh3d::default(),
+            Transform::from_translation(Vec3::new(position.0 as f32, 0., position.1 as f32)),
+        ))
         .insert(Piece {
             color: piece_color,
             piece_type: PieceType::Bishop,
@@ -530,16 +500,12 @@ fn spawn_bishop(
             y: position.1,
         })
         .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh,
-                material,
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.1, 0., 0.));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
+            parent.spawn((
+                Mesh3d::from(mesh),
+                MeshMaterial3d::from(material),
+                Transform::from_translation(Vec3::new(-0.1, 0., 0.))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
         });
 }
 
@@ -552,14 +518,11 @@ fn spawn_rook(
 ) {
     commands
         // Spawn parent entity
-        .spawn(PbrBundle {
-            transform: Transform::from_translation(Vec3::new(
-                position.0 as f32,
-                0.,
-                position.1 as f32,
-            )),
-            ..Default::default()
-        })
+        .spawn((
+            Visibility::default(),
+            Mesh3d::default(),
+            Transform::from_translation(Vec3::new(position.0 as f32, 0., position.1 as f32)),
+        ))
         .insert(Piece {
             color: piece_color,
             piece_type: PieceType::Rook,
@@ -567,16 +530,12 @@ fn spawn_rook(
             y: position.1,
         })
         .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh,
-                material,
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.1, 0., 1.8));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
+            parent.spawn((
+                Mesh3d::from(mesh),
+                MeshMaterial3d::from(material),
+                Transform::from_translation(Vec3::new(-0.1, 0., 1.8))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
         });
 }
 
@@ -589,14 +548,11 @@ fn spawn_pawn(
 ) {
     commands
         // Spawn parent entity
-        .spawn(PbrBundle {
-            transform: Transform::from_translation(Vec3::new(
-                position.0 as f32,
-                0.,
-                position.1 as f32,
-            )),
-            ..Default::default()
-        })
+        .spawn((
+            Visibility::default(),
+            Mesh3d::default(),
+            Transform::from_translation(Vec3::new(position.0 as f32, 0., position.1 as f32)),
+        ))
         .insert(Piece {
             color: piece_color,
             piece_type: PieceType::Pawn,
@@ -604,16 +560,12 @@ fn spawn_pawn(
             y: position.1,
         })
         .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh,
-                material,
-                transform: {
-                    let mut transform = Transform::from_translation(Vec3::new(-0.2, 0., 2.6));
-                    transform.scale *= Vec3::new(0.2, 0.2, 0.2);
-                    transform
-                },
-                ..Default::default()
-            });
+            parent.spawn((
+                Mesh3d::from(mesh),
+                MeshMaterial3d::from(material),
+                Transform::from_translation(Vec3::new(-0.2, 0., 2.6))
+                    .with_scale(Vec3::new(0.2, 0.2, 0.2)),
+            ));
         });
 }
 
