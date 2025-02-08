@@ -29,21 +29,21 @@ impl Plugin for GamePlugin {
             //.add_event::<GameOver>()
             .init_resource::<Events<GameOver>>()
             // States
-            .add_state::<SimulationState>()
+            .init_state::<SimulationState>()
             // OnEnter Systems
-            .add_system(pause_simulation.in_schedule(OnEnter(AppState::Game)))
+            .add_systems(OnEnter(AppState::Game), pause_simulation)
             // My Plugins
-            .add_plugin(EnemyPlugin)
-            .add_plugin(PlayerPlugin)
-            .add_plugin(ScorePlugin)
-            .add_plugin(StarPlugin)
-            .add_plugin(GameUIPlugin)
+            .add_plugins(EnemyPlugin)
+            .add_plugins(PlayerPlugin)
+            .add_plugins(ScorePlugin)
+            .add_plugins(StarPlugin)
+            .add_plugins(GameUIPlugin)
             // Systems
-            .add_system(toggle_simulation.run_if(in_state(AppState::Game)))
+            .add_systems(Update, toggle_simulation.run_if(in_state(AppState::Game)))
             // Exit State Systems
-            .add_system(resume_simulation.in_schedule(OnExit(AppState::Game)))
+            .add_systems(OnExit(AppState::Game), resume_simulation)
             // Clear game over envents  on GameOver state exit
-            .add_system(game_over_event_clear.in_schedule(OnExit(AppState::GameOver)));
+            .add_systems(OnExit(AppState::GameOver), game_over_event_clear);
     }
 }
 

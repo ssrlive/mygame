@@ -8,19 +8,19 @@ use crate::AppState;
 pub fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<PrimaryWindow>>) {
     let window = window_query.get_single().unwrap();
 
-    commands.spawn(Camera2dBundle {
-        transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
-        ..default()
-    });
+    commands.spawn((
+        Camera2d,
+        Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
+    ));
 }
 
 pub fn transition_to_game_state(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     app_state: Res<State<AppState>>,
     mut app_state_next_state: ResMut<NextState<AppState>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::G) {
-        if app_state != AppState::Game {
+    if keyboard_input.just_pressed(KeyCode::KeyG) {
+        if app_state.get() != &AppState::Game {
             app_state_next_state.set(AppState::Game);
             println!("Entered AppState::Game");
         }
@@ -28,12 +28,12 @@ pub fn transition_to_game_state(
 }
 
 pub fn transition_to_main_menu_state(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     app_state: Res<State<AppState>>,
     mut app_state_next_state: ResMut<NextState<AppState>>,
 ) {
-    if keyboard_input.just_pressed(KeyCode::M) {
-        if app_state != AppState::MainMenu {
+    if keyboard_input.just_pressed(KeyCode::KeyM) {
+        if app_state.get() != &AppState::MainMenu {
             app_state_next_state.set(AppState::MainMenu);
             println!("Entered AppState::MainMenu");
         }
@@ -44,7 +44,7 @@ pub fn handle_game_over(
     mut game_over_event_reader: EventReader<GameOver>,
     mut app_state_next_state: ResMut<NextState<AppState>>,
 ) {
-    for event in game_over_event_reader.iter() {
+    for event in game_over_event_reader.read() {
         println!("Your final score is: {}", event.score.to_string());
         app_state_next_state.set(AppState::GameOver);
         println!("Entered AppState::GameOver");
@@ -52,11 +52,11 @@ pub fn handle_game_over(
 }
 
 pub fn exit_game(
-    keyboard_input: Res<Input<KeyCode>>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut app_exit_event_writer: EventWriter<AppExit>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
-        app_exit_event_writer.send(AppExit);
+        app_exit_event_writer.send(AppExit::Success);
     }
 }
 

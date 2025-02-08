@@ -14,17 +14,17 @@ fn main() {
     App::new()
         // Bevy Plugins
         .add_plugins(DefaultPlugins)
-        .add_state::<AppState>()
+        .init_state::<AppState>()
         // My Plugins
-        .add_plugin(MainMenuPlugin)
-        .add_plugin(GamePlugin)
+        .add_plugins(MainMenuPlugin)
+        .add_plugins(GamePlugin)
         // Startup Systems
-        .add_startup_system(spawn_camera)
+        .add_systems(Startup, spawn_camera)
         // Systems
-        .add_system(transition_to_game_state)
-        .add_system(transition_to_main_menu_state)
-        .add_system(exit_game)
-        .add_system(handle_game_over)
+        .add_systems(Update, transition_to_game_state)
+        .add_systems(Update, transition_to_main_menu_state)
+        .add_systems(Update, exit_game)
+        .add_systems(Update, handle_game_over)
         .run();
 }
 

@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::random;
 
-// use crate::enemy::components::*;
 use super::components::*;
 use super::resources::*;
 use super::{ENEMY_SIZE, ENEMY_SPEED, NUMBER_OF_ENEMIES};
@@ -19,14 +18,9 @@ pub fn spawn_enemies(
         let random_y = random::<f32>() * window.height();
 
         commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(random_x, random_y, 0.0),
-                texture: asset_server.load("sprites/ball_red_large.png"),
-                ..default()
-            },
-            Enemy {
-                direction: Vec2::new(random::<f32>(), random::<f32>()).normalize(),
-            },
+            Transform::from_xyz(random_x, random_y, 0.0),
+            Sprite::from_image(asset_server.load("sprites/ball_red_large.png")),
+            Enemy::new(random::<f32>(), random::<f32>()),
         ));
     }
 }
@@ -40,7 +34,7 @@ pub fn despawn_enemies(mut commands: Commands, enemy_query: Query<Entity, With<E
 pub fn enemy_movement(mut enemy_query: Query<(&mut Transform, &Enemy)>, time: Res<Time>) {
     for (mut transform, enemy) in enemy_query.iter_mut() {
         let direction = Vec3::new(enemy.direction.x, enemy.direction.y, 0.0);
-        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
+        transform.translation += direction * ENEMY_SPEED * time.delta_secs();
     }
 }
 
@@ -136,14 +130,9 @@ pub fn spawn_enemies_over_time(
         let random_y = random::<f32>() * window.height();
 
         commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(random_x, random_y, 0.0),
-                texture: asset_server.load("sprites/ball_red_large.png"),
-                ..default()
-            },
-            Enemy {
-                direction: Vec2::new(random::<f32>(), random::<f32>()).normalize(),
-            },
+            Transform::from_xyz(random_x, random_y, 0.0),
+            Sprite::from_image(asset_server.load("sprites/ball_red_large.png")),
+            Enemy::new(random::<f32>(), random::<f32>()),
         ));
     }
 }

@@ -1,46 +1,49 @@
 use bevy::prelude::*;
 
-pub const BACKGROUND_COLOR: Color = Color::rgba(0.25, 0.25, 0.25, 0.5);
+pub const BACKGROUND_COLOR: Color = Color::srgba(0.25, 0.25, 0.25, 0.5);
 
-pub const HUD_STYLE: Style = Style {
+pub const HUD_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     display: Display::Flex,
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::SpaceBetween,
     align_items: AlignItems::Center,
-    size: Size::new(Val::Percent(100.0), Val::Percent(15.0)),
-    ..Style::DEFAULT
-};
+    width: Val::Percent(100.0),
+    height: Val::Percent(15.0),
+    ..default()
+});
 
-pub const LHS_STYLE: Style = Style {
+pub const LHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     display: Display::Flex,
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::Center,
     align_items: AlignItems::Center,
-    size: Size::new(Val::Px(200.0), Val::Percent(80.0)),
+    width: Val::Px(200.0),
+    height: Val::Percent(80.0),
     margin: UiRect::new(Val::Px(32.0), Val::Px(0.0), Val::Px(0.0), Val::Px(0.0)),
-    ..Style::DEFAULT
-};
+    ..default()
+});
 
-pub const RHS_STYLE: Style = Style {
+pub const RHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     display: Display::Flex,
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::Center,
     align_items: AlignItems::Center,
-    size: Size::new(Val::Px(200.0), Val::Percent(80.0)),
+    width: Val::Px(200.0),
+    height: Val::Percent(80.0),
     margin: UiRect::new(Val::Px(0.0), Val::Px(32.0), Val::Px(0.0), Val::Px(0.0)),
-    ..Style::DEFAULT
-};
+    ..default()
+});
 
-pub const IMAGE_STYLE: Style = Style {
-    size: Size::new(Val::Px(48.0), Val::Px(48.0)),
+pub const IMAGE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+    width: Val::Px(48.0),
+    height: Val::Px(48.0),
     margin: UiRect::new(Val::Px(8.0), Val::Px(8.0), Val::Px(8.0), Val::Px(8.0)),
-    ..Style::DEFAULT
-};
+    ..default()
+});
 
-pub fn get_text_style(asset_server: &Res<AssetServer>) -> TextStyle {
-    TextStyle {
-        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-        font_size: 64.0,
-        color: Color::rgb(1.0, 1.0, 1.0),
-    }
+pub fn get_text_style(asset_server: &Res<AssetServer>) -> (TextFont, TextColor) {
+    (
+        TextFont::from_font(asset_server.load("fonts/FiraSans-Bold.ttf")).with_font_size(64.0),
+        TextColor(Color::WHITE),
+    )
 }
