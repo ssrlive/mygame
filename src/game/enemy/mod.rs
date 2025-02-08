@@ -25,7 +25,6 @@ impl Plugin for EnemyPlugin {
                 Update,
                 (
                     enemy_movement,
-                    update_enemy_direction,
                     confine_enemy_movement,
                     tick_enemy_spawn_timer,
                     spawn_enemies_over_time,
