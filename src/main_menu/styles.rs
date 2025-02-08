@@ -34,14 +34,14 @@ pub static TITLE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| N
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::Center,
     align_items: AlignItems::Center,
-    width: Val::Px(300.0),
+    width: Val::Px(600.0),
     height: Val::Px(120.0),
     ..default()
 });
 
 pub fn get_title_text_style(asset_server: &Res<AssetServer>) -> (TextFont, TextColor) {
     (
-        TextFont::from_font(asset_server.load("fonts/FiraSans-Bold.ttf")).with_font_size(64.0),
+        TextFont::from_font(asset_server.load("fonts/FiraSans-Bold.ttf")).with_font_size(50.0),
         TextColor(Color::WHITE),
     )
 }

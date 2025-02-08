@@ -26,7 +26,7 @@ pub fn build_main_menu(commands: &mut Commands, asset_server: &Res<AssetServer>)
                 ));
                 // Text
                 parent.spawn((
-                    Text("Bevy Ball Game".to_string()),
+                    Text("Ball & Stars".to_string()),
                     get_title_text_style(asset_server),
                     TextLayout::new_with_justify(JustifyText::Center),
                 ));
