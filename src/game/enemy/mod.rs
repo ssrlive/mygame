@@ -26,7 +26,6 @@ impl Plugin for EnemyPlugin {
                 (
                     enemy_movement,
                     confine_enemy_movement,
-                    tick_enemy_spawn_timer,
                     spawn_enemies_over_time,
                 )
                     .run_if(in_state(AppState::Game).and(in_state(SimulationState::Running))),
