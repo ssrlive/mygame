@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 pub const BACKGROUND_COLOR: Color = Color::srgba(0.25, 0.25, 0.25, 0.5);
 
-pub const HUD_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static HUD_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     display: Display::Flex,
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::SpaceBetween,
@@ -12,7 +12,7 @@ pub const HUD_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node
     ..default()
 });
 
-pub const LHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static LHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     display: Display::Flex,
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::Center,
@@ -23,7 +23,7 @@ pub const LHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node
     ..default()
 });
 
-pub const RHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static RHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     display: Display::Flex,
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::Center,
@@ -34,7 +34,7 @@ pub const RHS_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node
     ..default()
 });
 
-pub const IMAGE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static IMAGE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     width: Val::Px(48.0),
     height: Val::Px(48.0),
     margin: UiRect::new(Val::Px(8.0), Val::Px(8.0), Val::Px(8.0), Val::Px(8.0)),

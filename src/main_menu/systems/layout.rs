@@ -27,7 +27,7 @@ pub fn build_main_menu(commands: &mut Commands, asset_server: &Res<AssetServer>)
                 // Text
                 parent.spawn((
                     Text("Bevy Ball Game".to_string()),
-                    get_title_text_style(&asset_server),
+                    get_title_text_style(asset_server),
                     TextLayout::new_with_justify(JustifyText::Center),
                 ));
                 // Image 2
@@ -39,30 +39,30 @@ pub fn build_main_menu(commands: &mut Commands, asset_server: &Res<AssetServer>)
             // === Play Button ===
             parent
                 .spawn((
-                    Button::default(),
+                    Button,
                     BUTTON_NODE.clone(),
-                    BackgroundColor(NORMAL_BUTTON_COLOR.into()),
+                    BackgroundColor(NORMAL_BUTTON_COLOR),
                     PlayButton {},
                 ))
                 .with_children(|parent| {
                     parent.spawn((
                         Text("Play".to_string()),
-                        get_button_text_style(&asset_server),
+                        get_button_text_style(asset_server),
                         TextLayout::new_with_justify(JustifyText::Center),
                     ));
                 });
             // === Quit Button ===
             parent
                 .spawn((
-                    Button::default(),
+                    Button,
                     BUTTON_NODE.clone(),
-                    BackgroundColor(NORMAL_BUTTON_COLOR.into()),
+                    BackgroundColor(NORMAL_BUTTON_COLOR),
                     QuitButton {},
                 ))
                 .with_children(|parent| {
                     parent.spawn((
                         Text("Quit".to_string()),
-                        get_button_text_style(&asset_server),
+                        get_button_text_style(asset_server),
                         TextLayout::new_with_justify(JustifyText::Center),
                     ));
                 });

@@ -32,57 +32,57 @@ pub fn build_pause_menu(commands: &mut Commands, asset_server: &Res<AssetServer>
             parent
                 .spawn((
                     PAUSE_MENU_CONTAINER_NODE.clone(),
-                    BackgroundColor(BACKGROUND_COLOR.into()),
+                    BackgroundColor(BACKGROUND_COLOR),
                 ))
                 .with_children(|parent| {
                     // Title
                     parent.spawn((
                         Text("Pause Menu".to_string()),
-                        get_title_text_style(&asset_server),
+                        get_title_text_style(asset_server),
                         TextLayout::new_with_justify(JustifyText::Center),
                     ));
                     // Resume Button
                     parent
                         .spawn((
-                            Button::default(),
+                            Button,
                             BUTTON_NODE.clone(),
-                            BackgroundColor(NORMAL_BUTTON.into()),
+                            BackgroundColor(NORMAL_BUTTON),
                             ResumeButton {},
                         ))
                         .with_children(|parent| {
                             parent.spawn((
                                 Text("Resume".to_string()),
-                                get_button_text_style(&asset_server),
+                                get_button_text_style(asset_server),
                                 TextLayout::new_with_justify(JustifyText::Center),
                             ));
                         });
                     // Main Menu Button
                     parent
                         .spawn((
-                            Button::default(),
+                            Button,
                             BUTTON_NODE.clone(),
-                            BackgroundColor(NORMAL_BUTTON.into()),
+                            BackgroundColor(NORMAL_BUTTON),
                             MainMenuButton {},
                         ))
                         .with_children(|parent| {
                             parent.spawn((
                                 Text("Main Menu".to_string()),
-                                get_button_text_style(&asset_server),
+                                get_button_text_style(asset_server),
                                 TextLayout::new_with_justify(JustifyText::Center),
                             ));
                         });
                     // Quit Button
                     parent
                         .spawn((
-                            Button::default(),
+                            Button,
                             BUTTON_NODE.clone(),
-                            BackgroundColor(NORMAL_BUTTON.into()),
+                            BackgroundColor(NORMAL_BUTTON),
                             QuitButton {},
                         ))
                         .with_children(|parent| {
                             parent.spawn((
                                 Text("Quit".to_string()),
-                                get_button_text_style(&asset_server),
+                                get_button_text_style(asset_server),
                                 TextLayout::new_with_justify(JustifyText::Center),
                             ));
                         });

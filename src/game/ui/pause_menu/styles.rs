@@ -6,7 +6,7 @@ pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 pub const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
-pub const PAUSE_MENU_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static PAUSE_MENU_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     position_type: PositionType::Absolute, // Needed to display separately from HUD.
     display: Display::Flex,                // Hidden by Default
     justify_content: JustifyContent::Center,
@@ -16,7 +16,7 @@ pub const PAUSE_MENU_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(
     ..default()
 });
 
-pub const PAUSE_MENU_CONTAINER_NODE: std::sync::LazyLock<Node> =
+pub static PAUSE_MENU_CONTAINER_NODE: std::sync::LazyLock<Node> =
     std::sync::LazyLock::new(|| Node {
         display: Display::Flex,
         flex_direction: FlexDirection::Column,
@@ -29,7 +29,7 @@ pub const PAUSE_MENU_CONTAINER_NODE: std::sync::LazyLock<Node> =
         ..default()
     });
 
-pub const BUTTON_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static BUTTON_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     width: Val::Px(200.0),
     height: Val::Px(80.0),
     justify_content: JustifyContent::Center,

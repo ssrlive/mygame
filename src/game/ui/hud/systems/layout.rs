@@ -23,7 +23,7 @@ pub fn build_hud(commands: &mut Commands, asset_server: &Res<AssetServer>) -> En
                     // Score Text
                     parent.spawn((
                         Text("0".to_string()),
-                        get_text_style(&asset_server),
+                        get_text_style(asset_server),
                         TextLayout::new_with_justify(JustifyText::Center),
                         ScoreText {},
                     ));
@@ -35,7 +35,7 @@ pub fn build_hud(commands: &mut Commands, asset_server: &Res<AssetServer>) -> En
                     // Enemy Text
                     parent.spawn((
                         Text("0".to_string()),
-                        get_text_style(&asset_server),
+                        get_text_style(asset_server),
                         TextLayout::new_with_justify(JustifyText::Center),
                         EnemyText {},
                     ));

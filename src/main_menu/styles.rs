@@ -4,7 +4,7 @@ pub const NORMAL_BUTTON_COLOR: Color = Color::srgb(0.15, 0.15, 0.15);
 pub const HOVERED_BUTTON_COLOR: Color = Color::srgb(0.25, 0.25, 0.25);
 pub const PRESSED_BUTTON_COLOR: Color = Color::srgb(0.35, 0.75, 0.35);
 
-pub const MAIN_MENU_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static MAIN_MENU_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     flex_direction: FlexDirection::Column,
     justify_content: JustifyContent::Center,
     align_items: AlignItems::Center,
@@ -15,7 +15,7 @@ pub const MAIN_MENU_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|
     ..default()
 });
 
-pub const BUTTON_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static BUTTON_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     justify_content: JustifyContent::Center,
     align_items: AlignItems::Center,
     width: Val::Px(200.0),
@@ -23,14 +23,14 @@ pub const BUTTON_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| N
     ..default()
 });
 
-pub const IMAGE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static IMAGE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     width: Val::Px(64.0),
     height: Val::Px(64.0),
     margin: UiRect::new(Val::Px(8.0), Val::Px(8.0), Val::Px(8.0), Val::Px(8.0)),
     ..default()
 });
 
-pub const TITLE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
+pub static TITLE_NODE: std::sync::LazyLock<Node> = std::sync::LazyLock::new(|| Node {
     flex_direction: FlexDirection::Row,
     justify_content: JustifyContent::Center,
     align_items: AlignItems::Center,
