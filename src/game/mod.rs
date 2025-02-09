@@ -15,7 +15,8 @@ use ui::GameUIPlugin;
 use bevy::prelude::*;
 
 use crate::events::GameOver;
-use crate::{game_over_event_clear, AppState};
+use crate::systems::game_over_event_clear;
+use crate::AppState;
 
 pub struct GamePlugin;
 
