@@ -49,14 +49,8 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut asset_server: Res<AssetServer>,
-    mut textures: ResMut<Assets<Texture>>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     commands.spawn(Camera2d);
-    bird::spawn_bird(
-        &mut commands,
-        &mut asset_server,
-        &mut textures,
-        &mut texture_atlases,
-    );
+    bird::spawn_bird(&mut commands, &mut asset_server, &mut texture_atlases);
 }

@@ -9,6 +9,7 @@ use gamestate::*;
 use physics::*;
 use rand::{thread_rng, Rng};
 
+#[derive(Component)]
 pub struct Pipe;
 
 pub struct SpawnTimer {
@@ -27,7 +28,7 @@ pub struct PipeSpawnSettings {
     pub max_center_delta: f32,
 }
 
-#[derive(PartialEq)]
+#[derive(Component, PartialEq)]
 pub enum Collider {
     Solid,
     ScoreGiver,

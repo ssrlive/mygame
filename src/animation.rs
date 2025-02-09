@@ -11,6 +11,7 @@ pub struct Animation {
     pub current_frame: i32,
 }
 
+#[derive(Component)]
 pub struct Animations {
     pub animations: Vec<Animation>,
     pub current_animation: i32,
