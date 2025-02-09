@@ -86,7 +86,7 @@ pub fn confine_enemy_movement(
             } else {
                 asset_server.load("audio/pluck_002.ogg")
             };
-            commands.spawn((AudioPlayer::new(sound_effect), PlaybackSettings::ONCE));
+            commands.spawn((AudioPlayer::new(sound_effect), PlaybackSettings::DESPAWN));
         }
     }
 }

@@ -113,7 +113,7 @@ pub fn enemy_hit_player(
             if distance < player_radius + enemy_radius {
                 println!("Enemy hit player! Game Over!");
                 let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
-                commands.spawn((AudioPlayer::new(sound_effect), PlaybackSettings::ONCE));
+                commands.spawn((AudioPlayer::new(sound_effect), PlaybackSettings::DESPAWN));
                 commands.entity(player_entity).despawn();
                 game_over_event_writer.send(GameOver { score: score.value });
             }
@@ -138,7 +138,7 @@ pub fn player_hit_star(
                 println!("Player hit star!");
                 score.value += 1;
                 let sound_effect = asset_server.load("audio/laserLarge_000.ogg");
-                commands.spawn((AudioPlayer::new(sound_effect), PlaybackSettings::ONCE));
+                commands.spawn((AudioPlayer::new(sound_effect), PlaybackSettings::DESPAWN));
                 commands.entity(star_entity).despawn();
             }
         }
