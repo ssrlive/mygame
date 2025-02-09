@@ -24,21 +24,19 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app
             // Events
-            // Need to do manual event cleanup due to run conditions
-            // If event is cleared before game over menu text is updated the final score will not be diplayed.
-            // To fix it the game over event will be available until GameOver state exits
-            //.add_event::<GameOver>()
             .init_resource::<Events<GameOver>>()
             // States
             .init_state::<SimulationState>()
             // OnEnter Systems
             .add_systems(OnEnter(AppState::Game), pause_simulation)
             // My Plugins
-            .add_plugins(EnemyPlugin)
-            .add_plugins(PlayerPlugin)
-            .add_plugins(ScorePlugin)
-            .add_plugins(StarPlugin)
-            .add_plugins(GameUIPlugin)
+            .add_plugins((
+                EnemyPlugin,
+                PlayerPlugin,
+                ScorePlugin,
+                StarPlugin,
+                GameUIPlugin,
+            ))
             // Systems
             .add_systems(Update, toggle_simulation.run_if(in_state(AppState::Game)))
             // Exit State Systems
