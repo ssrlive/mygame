@@ -1,4 +1,7 @@
 use bevy::prelude::*;
+
+use crate::bird::PlayerTimer;
+
 pub struct MyAnimationPlugin;
 
 pub struct AnimationFrame {
@@ -18,14 +21,14 @@ pub struct Animations {
 }
 
 impl Plugin for MyAnimationPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system(animate_system.system());
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, animate_system);
     }
 }
 
-fn animate_system(mut query: Query<(&mut Timer, &mut TextureAtlasSprite, &mut Animations)>) {
-    for (mut timer, mut sprite, mut animations) in &mut query.iter() {
-        if timer.finished {
+fn animate_system(mut query: Query<(&mut PlayerTimer, &mut Sprite, &mut Animations)>) {
+    for (mut timer, mut sprite, mut animations) in &mut query.iter_mut() {
+        if timer.0.finished() {
             let current_animation_index = animations.current_animation;
             match animations
                 .animations
@@ -40,9 +43,13 @@ fn animate_system(mut query: Query<(&mut Timer, &mut TextureAtlasSprite, &mut An
                         .frames
                         .get(animation.current_frame as usize)
                         .unwrap();
-                    timer.duration = frame_data.time;
+                    let v = std::time::Duration::from_secs_f32(frame_data.time);
+                    timer.0.set_duration(v);
+
                     if let Some(frame) = animation.frames.get(animation.current_frame as usize) {
-                        sprite.index = frame.index as u32;
+                        if let Some(texture_atlas) = sprite.texture_atlas.as_mut() {
+                            texture_atlas.index = frame.index as usize;
+                        }
                     }
                 }
                 None => {}

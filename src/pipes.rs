@@ -7,17 +7,18 @@ use bounds_deletion::*;
 use gamedata::*;
 use gamestate::*;
 use physics::*;
-use rand::{thread_rng, Rng};
 
 #[derive(Component)]
 pub struct Pipe;
 
+#[derive(Resource)]
 pub struct SpawnTimer {
     pub timer: Timer,
     // center pos of pipes, in precentage
     pub last_pos: f32,
 }
 
+#[derive(Resource)]
 pub struct PipeSpawnSettings {
     pub min_time: f32,
     pub max_time: f32,
@@ -37,13 +38,13 @@ pub enum Collider {
 pub struct PipePlugin;
 
 impl Plugin for PipePlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system(spawn_pipe_system.system())
-            .add_resource(SpawnTimer {
-                timer: Timer::from_seconds(2.0, true),
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, spawn_pipe_system)
+            .insert_resource(SpawnTimer {
+                timer: Timer::from_seconds(2.0, TimerMode::Repeating),
                 last_pos: 0.5,
             })
-            .add_resource(PipeSpawnSettings {
+            .insert_resource(PipeSpawnSettings {
                 min_time: 0.9,
                 max_time: 1.2,
                 speed: -700.0,
@@ -61,26 +62,27 @@ fn spawn_pipe_system(
     asset_server: Res<AssetServer>,
     time: Res<Time>,
     mut spawn_timer: ResMut<SpawnTimer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-    mut textures: ResMut<Assets<Texture>>,
 ) {
     if game_data.game_state != GameState::Playing {
         return;
     }
 
-    spawn_timer.timer.tick(time.delta_seconds);
-    if !spawn_timer.timer.finished {
+    spawn_timer.timer.tick(time.delta());
+    if !spawn_timer.timer.finished() {
         return;
     }
 
-    let mut rng = thread_rng();
-    spawn_timer.timer.duration = rng.gen_range(pipe_settings.min_time, pipe_settings.max_time);
+    use rand::Rng;
+    let mut rng = rand::rng();
+
+    spawn_timer
+        .timer
+        .set_duration(std::time::Duration::from_secs_f32(
+            rng.random_range(pipe_settings.min_time..pipe_settings.max_time),
+        ));
 
     let mut new_center_pos = spawn_timer.last_pos
-        - rng.gen_range(
-            -pipe_settings.max_center_delta,
-            pipe_settings.max_center_delta,
-        );
+        - rng.random_range(-pipe_settings.max_center_delta..pipe_settings.max_center_delta);
 
     // sorry for the hardcoded values
     // This is the extent from the center in Y, a pipe can go maximum, until it flies in the air
@@ -93,63 +95,55 @@ fn spawn_pipe_system(
     // to world units
     new_center_pos *= 1280.0 * 0.5;
 
-    let pipe_texture_handle = asset_server
-        .load_sync(&mut textures, "assets/pipe.png")
-        .unwrap();
+    let pipe_texture_handle = asset_server.load("assets/pipe.png");
 
     let pipe_offset_y = (6.0 * 128.0) * 0.5;
     let pipe_offset_x = (6.0 * 32.0) * 0.5;
-    let mut pipe_delta = rng.gen_range(
-        pipe_settings.min_pipe_distance,
-        pipe_settings.max_pipe_distance,
-    );
+    let mut pipe_delta =
+        rng.random_range(pipe_settings.min_pipe_distance..pipe_settings.max_pipe_distance);
     // half the size because both pipes will be offseted in opposide direction
     pipe_delta *= 0.5;
     let x_pos = 1920.0 * 0.5 + pipe_offset_x;
 
+    let mut sprite = Sprite::from_image(pipe_texture_handle.clone());
+    sprite.custom_size = Some(Vec2::new(32.0, 128.0) * 6.0);
+
     // lower pipe
-    commands
-        .spawn(SpriteComponents {
-            material: materials.add(pipe_texture_handle.into()),
-            scale: Scale(6.0),
-            draw: Draw {
-                is_transparent: true,
-                is_visible: true,
-                render_commands: Vec::new(),
-            },
-            translation: Translation::new(x_pos, -pipe_offset_y + new_center_pos - pipe_delta, 3.0),
-            ..Default::default()
-        })
-        .with(Velocity(Vec2::new(pipe_settings.speed, 0.0)))
-        .with(Pipe)
-        .with(OffsceenDeletion)
-        .with(Collider::Solid);
+    commands.spawn((
+        sprite.clone(),
+        Transform::from_translation(Vec3::new(
+            x_pos,
+            -pipe_offset_y + new_center_pos - pipe_delta,
+            3.0,
+        )),
+        Velocity(Vec2::new(pipe_settings.speed, 0.0)),
+        Pipe,
+        OffsceenDeletion,
+        Collider::Solid,
+    ));
+
     // higher pipe
-    commands
-        .spawn(SpriteComponents {
-            material: materials.add(pipe_texture_handle.into()),
-            scale: Scale(6.0),
-            draw: Draw {
-                is_transparent: true,
-                is_visible: true,
-                render_commands: Vec::new(),
-            },
-            translation: Translation::new(x_pos, pipe_offset_y + new_center_pos + pipe_delta, 3.0),
-            rotation: Rotation::from_rotation_z(std::f32::consts::PI),
-            ..Default::default()
-        })
-        .with(Pipe)
-        .with(OffsceenDeletion)
-        .with(Velocity(Vec2::new(pipe_settings.speed, 0.0)))
-        .with(Collider::Solid);
+    commands.spawn((
+        sprite,
+        Transform::from_translation(Vec3::new(
+            x_pos,
+            pipe_offset_y + new_center_pos + pipe_delta,
+            3.0,
+        ))
+        .with_rotation(Quat::from_rotation_z(std::f32::consts::PI)),
+        Pipe,
+        OffsceenDeletion,
+        Velocity(Vec2::new(pipe_settings.speed, 0.0)),
+        Collider::Solid,
+    ));
 
     // score collider offseted by half player size
     let score_offset = Vec3::new(32.0 * 6.0 * 0.5, 0.0, 0.0);
-    commands
-        .spawn((
-            Translation(score_offset + Vec3::new(x_pos, 0.0, 0.0)),
-            Collider::ScoreGiver,
-            Velocity(Vec2::new(pipe_settings.speed, 0.0)),
-        ))
-        .with(OffsceenDeletion);
+    commands.spawn((
+        Visibility::default(),
+        Transform::from_translation(score_offset + Vec3::new(x_pos, 0.0, 0.0)),
+        Collider::ScoreGiver,
+        Velocity(Vec2::new(pipe_settings.speed, 0.0)),
+        OffsceenDeletion,
+    ));
 }

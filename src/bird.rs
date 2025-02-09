@@ -18,7 +18,7 @@ use screens::*;
 pub struct Player;
 
 #[derive(Component, Deref, DerefMut)]
-struct PlayerTimer(Timer);
+pub struct PlayerTimer(pub Timer);
 
 #[derive(Resource)]
 pub struct JumpHeight(pub f32);
@@ -100,14 +100,14 @@ fn player_bounds_system(
 ) {
     let half_screen_size = 1280.0 * 0.5;
     let player_size = 32.0 * 6.0;
-    for (_p, mut translation, mut velocity) in &mut player_query.iter() {
+    for (_p, mut transform, mut velocity) in &mut player_query.iter_mut() {
         // bounce against ceiling
-        if translation.0.y() > half_screen_size - player_size {
-            velocity.0.set_y(-3.0);
-            translation.0.set_y(half_screen_size - player_size);
+        if transform.translation.y > half_screen_size - player_size {
+            velocity.0.y = -3.0;
+            transform.translation.y = half_screen_size - player_size;
         }
         // death on bottom touch
-        if translation.0.y() < -half_screen_size {
+        if transform.translation.y < -half_screen_size {
             trigger_death(
                 &mut commands,
                 &mut game_data,
