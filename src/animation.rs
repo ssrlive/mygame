@@ -26,10 +26,11 @@ impl Plugin for MyAnimationPlugin {
     }
 }
 
-fn animate_system(mut query: Query<(&mut PlayerTimer, &mut Sprite, &mut Animations)>) {
+fn animate_system(mut query: Query<(&mut PlayerTimer, &mut Sprite, &mut Animations)>, time: Res<Time>) {
     let Ok((mut timer, mut sprite, mut animations)) = query.get_single_mut() else {
         return;
     };
+    timer.0.tick(time.delta());
     if !timer.0.finished() {
         return;
     }
@@ -44,6 +45,7 @@ fn animate_system(mut query: Query<(&mut PlayerTimer, &mut Sprite, &mut Animatio
     let frame_data = animation.frames.get(animation.current_frame as usize).unwrap();
     let v = std::time::Duration::from_secs_f32(frame_data.time);
     timer.0.set_duration(v);
+    timer.0.reset();
 
     if let Some(frame) = animation.frames.get(animation.current_frame as usize) {
         if let Some(texture_atlas) = sprite.texture_atlas.as_mut() {
