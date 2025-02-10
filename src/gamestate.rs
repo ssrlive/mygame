@@ -29,8 +29,8 @@ fn handle_gamestate_system(
     mut game_data: ResMut<GameData>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&Player, &mut Transform, &mut Velocity)>,
-    mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
-    mut start_screen_query: Query<(&StartScreen, &mut Visibility)>,
+    mut end_screen_query: Query<(&EndScreen, &mut Visibility), Without<StartScreen>>,
+    mut start_screen_query: Query<(&StartScreen, &mut Visibility), Without<EndScreen>>,
 ) {
     match game_data.game_state {
         GameState::Menu => {

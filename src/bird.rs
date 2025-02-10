@@ -1,3 +1,4 @@
+use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::{input::keyboard::KeyCode, prelude::*};
 
 use crate::animation;
@@ -70,32 +71,25 @@ fn player_input(
 }
 
 // Auto jump until input is given
-fn handle_stay_in_screen(
-    jump_height: Res<JumpHeight>,
-    velocity: &mut Mut<'_, Velocity>,
-    transform: &Mut<'_, Transform>,
-) {
+fn handle_stay_in_screen(jump_height: Res<JumpHeight>, velocity: &mut Mut<'_, Velocity>, transform: &Mut<'_, Transform>) {
     if transform.translation.y < 0.0 {
         velocity.0.y = jump_height.0;
     }
 }
 
-fn handle_jump(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    jump_height: Res<JumpHeight>,
-    mut velocity: Mut<Velocity>,
-) {
+fn handle_jump(keyboard_input: Res<ButtonInput<KeyCode>>, jump_height: Res<JumpHeight>, mut velocity: Mut<Velocity>) {
     if keyboard_input.just_pressed(KeyCode::Space) {
         velocity.0.y = jump_height.0;
     }
 }
 
+#[allow(clippy::complexity)]
 fn player_bounds_system(
     mut commands: Commands,
     mut game_data: ResMut<GameData>,
-    mut player_query: Query<(&Player, &mut Transform, &mut Velocity)>,
-    mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity)>,
-    mut score_collider_query: Query<(&Transform, &Collider, Entity)>,
+    mut player_query: Query<(&Player, &mut Transform, &mut Velocity), Without<Pipe>>,
+    mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
+    mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
 ) {
     let half_screen_size = 1280.0 * 0.5;
@@ -119,13 +113,13 @@ fn player_bounds_system(
     }
 }
 
+#[allow(clippy::complexity)]
 fn player_collision_system(
     mut commands: Commands,
     mut game_data: ResMut<GameData>,
-    // mut worlds: Query<&mut World>,
-    mut player_query: Query<(&Player, &Transform)>,
-    mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity)>,
-    mut score_collider_query: Query<(&Transform, &Collider, Entity)>,
+    player_query: Query<(&Player, &Transform)>,
+    mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
+    mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
 ) {
     // Player size can't be fetched from AtlasTextureSprite, so I'm hard coding it here...
@@ -134,39 +128,30 @@ fn player_collision_system(
     player_size *= 0.4;
     let player_size_vec = (player_size, player_size);
     for (_player, player_translation) in &mut player_query.iter() {
-        for (translation, collider, entity) in &mut score_collider_query.iter() {
-            if *collider != Collider::ScoreGiver {
-                continue;
-            }
+        for (_s, translation, _collider, entity) in &mut score_collider_query.iter() {
             let collision = collide(
-                player_translation.0,
+                player_translation.translation,
                 player_size_vec.into(),
-                translation.0,
+                translation.translation,
                 Vec2::new(10.0, 1280.0),
             );
-            if collision.is_some() {
+            if collision {
                 game_data.score += 1;
                 println!("got score!: {}", game_data.score);
                 // Remove coin collider, quick simple solution
-                for world in &mut worlds.iter() {
-                    if !world.contains(entity) {
-                        commands.despawn(entity);
-                    }
-                }
+                commands.entity(entity).despawn_recursive();
             }
         }
         // Check for collision
         let mut did_collide = false;
-        for (_pipe, pipe_translation, _collider, pipe_sprite, _pipe_entity) in
-            &mut pipe_query.iter()
-        {
+        for (_pipe, pipe_translation, _collider, pipe_sprite, _pipe_entity) in &mut pipe_query.iter() {
             let collision = collide(
-                player_translation.0,
+                player_translation.translation,
                 player_size_vec.into(),
-                pipe_translation.0,
-                pipe_sprite.size * 6.0,
+                pipe_translation.translation,
+                pipe_sprite.custom_size.unwrap(),
             );
-            if collision.is_some() {
+            if collision {
                 did_collide = true;
                 break;
             }
@@ -183,11 +168,17 @@ fn player_collision_system(
     }
 }
 
+fn collide(pos1: Vec3, size1: Vec2, pos2: Vec3, size2: Vec2) -> bool {
+    let volume = Aabb2d::new(pos1.xy(), size1 / 2.0);
+    Aabb2d::new(pos2.xy(), size2 / 2.0).intersects(&volume)
+}
+
+#[allow(clippy::complexity)]
 fn trigger_death(
     commands: &mut Commands,
     game_data: &mut ResMut<GameData>,
-    pipe_query: &mut Query<(&Pipe, &Transform, &Collider, &Sprite, Entity)>,
-    score_query: &mut Query<(&Transform, &Collider, Entity)>,
+    pipe_query: &mut Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
+    score_query: &mut Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     end_screen_query: &mut Query<(&EndScreen, &mut Visibility)>,
 ) {
     game_data.game_state = GameState::Dead;
@@ -197,10 +188,8 @@ fn trigger_death(
         commands.entity(pipe_entity).despawn_recursive();
     }
     // Despawn score colliders
-    for (_t, collider, score_entity) in &mut score_query.iter() {
-        if *collider == Collider::ScoreGiver {
-            commands.entity(score_entity).despawn_recursive();
-        }
+    for (_s, _t, _collider, score_entity) in &mut score_query.iter() {
+        commands.entity(score_entity).despawn_recursive();
     }
     for (_es, mut draw) in &mut end_screen_query.iter_mut() {
         *draw = Visibility::Visible;
@@ -218,8 +207,7 @@ fn velocity_rotator_system(mut query: Query<(&Velocity, &mut Transform, &Velocit
     procentage = (procentage + 1.0) * 0.5;
 
     // Lerp from lower angle to upper angle
-    let rad_angle =
-        (1.0 - procentage) * velocity_rotator.angle_down + procentage * velocity_rotator.angle_up;
+    let rad_angle = (1.0 - procentage) * velocity_rotator.angle_down + procentage * velocity_rotator.angle_up;
 
     transform.rotation = Quat::from_rotation_z(rad_angle);
 }
@@ -234,15 +222,11 @@ fn velocity_animator_system(mut query: Query<(&mut Animations, &Velocity)>) {
     }
 }
 
-pub fn spawn_bird(
-    commands: &mut Commands,
-    asset_server: &mut Res<AssetServer>,
-    texture_atlases: &mut ResMut<Assets<TextureAtlasLayout>>,
-) {
+pub fn spawn_bird(commands: &mut Commands, asset_server: &mut Res<AssetServer>, texture_atlases: &mut ResMut<Assets<TextureAtlasLayout>>) {
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 2, 2, None, None);
     let texture_atlas_layout = texture_atlases.add(layout);
 
-    let image = asset_server.load("assets/bird.png");
+    let image = asset_server.load("bird.png");
     let mut bird = Sprite::from_atlas_image(image, texture_atlas_layout.into());
     bird.custom_size = Some(Vec2::splat(32.0 * 6.0));
 
@@ -263,30 +247,15 @@ pub fn spawn_bird(
                 Animation {
                     current_frame: 0,
                     frames: vec![
-                        AnimationFrame {
-                            index: 0,
-                            time: 0.1,
-                        },
-                        AnimationFrame {
-                            index: 1,
-                            time: 0.1,
-                        },
-                        AnimationFrame {
-                            index: 2,
-                            time: 0.3,
-                        },
-                        AnimationFrame {
-                            index: 1,
-                            time: 0.1,
-                        },
+                        AnimationFrame { index: 0, time: 0.1 },
+                        AnimationFrame { index: 1, time: 0.1 },
+                        AnimationFrame { index: 2, time: 0.3 },
+                        AnimationFrame { index: 1, time: 0.1 },
                     ],
                 },
                 Animation {
                     current_frame: 0,
-                    frames: vec![AnimationFrame {
-                        index: 3,
-                        time: 0.2,
-                    }],
+                    frames: vec![AnimationFrame { index: 3, time: 0.2 }],
                 },
             ],
             current_animation: 0,

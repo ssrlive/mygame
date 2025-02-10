@@ -15,15 +15,11 @@ impl Plugin for ScreensPlugin {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let start_texture_handle = asset_server.load("assets/SpaceToStart.png");
-    let game_over_texture_handle = asset_server.load("assets/GameOverText.png");
+    let start_texture_handle = asset_server.load("SpaceToStart.png");
+    let game_over_texture_handle = asset_server.load("GameOverText.png");
 
     // Start Screen
     commands.spawn((Sprite::from_image(start_texture_handle), StartScreen));
 
-    commands.spawn((
-        Visibility::Hidden,
-        Sprite::from_image(game_over_texture_handle),
-        EndScreen,
-    ));
+    commands.spawn((Visibility::Hidden, Sprite::from_image(game_over_texture_handle), EndScreen));
 }

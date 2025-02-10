@@ -17,11 +17,7 @@ impl Plugin for PhysicsPlugin {
     }
 }
 
-fn gravity_system(
-    gravity: Res<Gravity>,
-    time: Res<Time>,
-    mut query: Query<(&mut Velocity, &AffectedByGravity)>,
-) {
+fn gravity_system(gravity: Res<Gravity>, time: Res<Time>, mut query: Query<(&mut Velocity, &AffectedByGravity)>) {
     for (mut velocity, _) in query.iter_mut() {
         velocity.0.y -= gravity.0 * time.delta_secs();
     }

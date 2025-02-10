@@ -13,10 +13,7 @@ pub struct MountainPlugin;
 impl Plugin for MountainPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, mountain_spawn_system)
-            .insert_resource(MountainTimer(Timer::from_seconds(
-                3.0,
-                TimerMode::Repeating,
-            )));
+            .insert_resource(MountainTimer(Timer::from_seconds(3.0, TimerMode::Repeating)));
     }
 }
 
@@ -29,8 +26,8 @@ fn mountain_spawn_system(
     use rand::Rng;
     let mut rng = rand::rng();
     let mountain_texture = match rng.random_bool(0.5) {
-        true => asset_server.load("assets/mountain.png"),
-        false => asset_server.load("assets/mountain.png"),
+        true => asset_server.load("mountain.png"),
+        false => asset_server.load("mountain.png"),
     };
 
     let mut sprite = Sprite::from_image(mountain_texture);
@@ -48,11 +45,7 @@ fn mountain_spawn_system(
         commands.spawn((
             sprite,
             BackgroundColor(Color::srgb(0.26, 0.26, 0.26)),
-            Transform::from_translation(Vec3::new(
-                1920.0 * 0.5 + 30.0 * 43.0,
-                -1280.0 * 0.5 - 100.0,
-                0.3,
-            )),
+            Transform::from_translation(Vec3::new(1920.0 * 0.5 + 30.0 * 43.0, -1280.0 * 0.5 - 100.0, 0.3)),
             OffsceenDeletion,
             Velocity(Vec2::new(-400.0, 0.0)),
         ));
