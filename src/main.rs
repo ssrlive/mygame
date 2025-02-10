@@ -39,10 +39,7 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.34, 0.75, 0.79)))
         .insert_resource(JumpHeight(23.0 * 40.0))
         .insert_resource(Gravity(45.0 * 40.0))
-        .insert_resource(GameData {
-            game_state: GameState::Menu,
-            score: 0,
-        })
+        .init_resource::<GameData>()
         .run();
 }
 

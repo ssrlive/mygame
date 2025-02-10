@@ -41,17 +41,20 @@ impl Plugin for BirdPlugin {
             Update,
             (
                 player_input,
-                player_bounds_system,
-                player_collision_system,
-                velocity_rotator_system,
-                velocity_animator_system,
+                (
+                    player_bounds_system,
+                    player_collision_system,
+                    velocity_rotator_system,
+                    velocity_animator_system,
+                )
+                    .run_if(in_state(GameState::Playing)),
             ),
         );
     }
 }
 
 fn player_input(
-    game_data: Res<GameData>,
+    game_state: Res<State<GameState>>,
     jump_height: Res<JumpHeight>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut query: Query<(&mut Velocity, &mut Transform, &Player)>,
@@ -59,7 +62,7 @@ fn player_input(
     let Ok((mut velocity, translation, _player)) = query.get_single_mut() else {
         return;
     };
-    match game_data.game_state {
+    match game_state.get() {
         GameState::Menu => {
             handle_stay_in_screen(jump_height, &mut velocity, &translation);
         }
@@ -91,25 +94,28 @@ fn player_bounds_system(
     mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
     mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
+    mut game_state: ResMut<NextState<GameState>>,
 ) {
     let half_screen_size = 1280.0 * 0.5;
     let player_size = 32.0 * 6.0;
-    for (_p, mut transform, mut velocity) in &mut player_query.iter_mut() {
-        // bounce against ceiling
-        if transform.translation.y > half_screen_size - player_size {
-            velocity.0.y = -3.0;
-            transform.translation.y = half_screen_size - player_size;
-        }
-        // death on bottom touch
-        if transform.translation.y < -half_screen_size {
-            trigger_death(
-                &mut commands,
-                &mut game_data,
-                &mut pipe_query,
-                &mut score_collider_query,
-                &mut end_screen_query,
-            );
-        }
+    let Ok((_p, mut transform, mut velocity)) = player_query.get_single_mut() else {
+        return;
+    };
+    // bounce against ceiling
+    if transform.translation.y > half_screen_size - player_size {
+        velocity.0.y = -3.0;
+        transform.translation.y = half_screen_size - player_size;
+    }
+    // death on bottom touch
+    if transform.translation.y < -half_screen_size {
+        trigger_death(
+            &mut commands,
+            &mut game_data,
+            &mut pipe_query,
+            &mut score_collider_query,
+            &mut end_screen_query,
+            &mut game_state,
+        );
     }
 }
 
@@ -121,50 +127,53 @@ fn player_collision_system(
     mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
     mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
+    mut game_state: ResMut<NextState<GameState>>,
 ) {
     // Player size can't be fetched from AtlasTextureSprite, so I'm hard coding it here...
     let mut player_size = 6.0 * 32.0;
     // Make player hitbox half size, to feel more fair
     player_size *= 0.4;
     let player_size_vec = (player_size, player_size);
-    for (_player, player_translation) in &mut player_query.iter() {
-        for (_s, translation, _collider, entity) in &mut score_collider_query.iter() {
-            let collision = collide(
-                player_translation.translation,
-                player_size_vec.into(),
-                translation.translation,
-                Vec2::new(10.0, 1280.0),
-            );
-            if collision {
-                game_data.score += 1;
-                println!("got score!: {}", game_data.score);
-                // Remove coin collider, quick simple solution
-                commands.entity(entity).despawn_recursive();
-            }
+    let Ok((_player, player_translation)) = player_query.get_single() else {
+        return;
+    };
+    for (_s, translation, _collider, _entity) in &mut score_collider_query.iter() {
+        let collision = collide(
+            player_translation.translation,
+            player_size_vec.into(),
+            translation.translation,
+            Vec2::new(10.0, 1280.0),
+        );
+        if collision {
+            game_data.score += 1;
+            println!("got score!: {}", game_data.score);
+            // Remove coin collider, quick simple solution
+            commands.entity(_entity).despawn_recursive();
         }
-        // Check for collision
-        let mut did_collide = false;
-        for (_pipe, pipe_translation, _collider, pipe_sprite, _pipe_entity) in &mut pipe_query.iter() {
-            let collision = collide(
-                player_translation.translation,
-                player_size_vec.into(),
-                pipe_translation.translation,
-                pipe_sprite.custom_size.unwrap(),
-            );
-            if collision {
-                did_collide = true;
-                break;
-            }
+    }
+    // Check for collision
+    let mut did_collide = false;
+    for (_pipe, pipe_translation, _collider, pipe_sprite, _pipe_entity) in &mut pipe_query.iter() {
+        let collision = collide(
+            player_translation.translation,
+            player_size_vec.into(),
+            pipe_translation.translation,
+            pipe_sprite.custom_size.unwrap(),
+        );
+        if collision {
+            did_collide = true;
+            break;
         }
-        if did_collide {
-            trigger_death(
-                &mut commands,
-                &mut game_data,
-                &mut pipe_query,
-                &mut score_collider_query,
-                &mut end_screen_query,
-            );
-        }
+    }
+    if did_collide {
+        trigger_death(
+            &mut commands,
+            &mut game_data,
+            &mut pipe_query,
+            &mut score_collider_query,
+            &mut end_screen_query,
+            &mut game_state,
+        );
     }
 }
 
@@ -180,8 +189,9 @@ fn trigger_death(
     pipe_query: &mut Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
     score_query: &mut Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     end_screen_query: &mut Query<(&EndScreen, &mut Visibility)>,
+    game_state: &mut ResMut<NextState<GameState>>,
 ) {
-    game_data.game_state = GameState::Dead;
+    game_state.set(GameState::Dead);
     game_data.score = 0;
     // Despawn all pipes
     for (_p, _pt, _c, _ps, pipe_entity) in &mut pipe_query.iter() {

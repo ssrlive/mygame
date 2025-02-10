@@ -1,12 +1,8 @@
-use crate::bounds_deletion;
-use crate::gamedata;
-use crate::gamestate;
-use crate::physics;
 use bevy::prelude::*;
-use bounds_deletion::*;
-use gamedata::*;
-use gamestate::*;
-use physics::*;
+
+use crate::bounds_deletion::*;
+use crate::gamestate::*;
+use crate::physics::*;
 
 #[derive(Component)]
 pub struct Pipe;
@@ -39,7 +35,7 @@ pub struct PipePlugin;
 
 impl Plugin for PipePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, spawn_pipe_system)
+        app.add_systems(Update, spawn_pipe_system.run_if(in_state(GameState::Playing)))
             .insert_resource(SpawnTimer {
                 timer: Timer::from_seconds(2.0, TimerMode::Repeating),
                 last_pos: 0.5,
@@ -58,15 +54,10 @@ impl Plugin for PipePlugin {
 fn spawn_pipe_system(
     mut commands: Commands,
     pipe_settings: Res<PipeSpawnSettings>,
-    game_data: Res<GameData>,
     asset_server: Res<AssetServer>,
     time: Res<Time>,
     mut spawn_timer: ResMut<SpawnTimer>,
 ) {
-    if game_data.game_state != GameState::Playing {
-        return;
-    }
-
     spawn_timer.timer.tick(time.delta());
     if !spawn_timer.timer.finished() {
         return;
