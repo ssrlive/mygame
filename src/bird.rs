@@ -147,8 +147,7 @@ fn player_collision_system(
         if collision {
             game_data.score += 1;
             println!("got score!: {}", game_data.score);
-            // Remove coin collider, quick simple solution
-            commands.entity(_entity).despawn_recursive();
+            commands.entity(_entity).remove::<Collider>();
         }
     }
     // Check for collision
