@@ -41,12 +41,12 @@ fn handle_gamestate_system(
         GameState::Dead => {
             if keyboard_input.just_pressed(KeyCode::Space) {
                 next_state.set(GameState::Playing);
-                for (_p, mut translation, mut velocity) in &mut player_query.iter_mut() {
-                    translation.translation = Vec3::new(0.0, 0.0, 100.0);
+                if let Ok((_p, mut transform, mut velocity)) = player_query.get_single_mut() {
+                    transform.translation = Vec3::new(0.0, 0.0, 100.0);
                     velocity.0.y = 0.0;
                 }
-                for (_es, mut draw) in &mut end_screen_query.iter_mut() {
-                    *draw = Visibility::Hidden;
+                for (_es, mut visibility) in &mut end_screen_query.iter_mut() {
+                    *visibility = Visibility::Hidden;
                 }
             }
         }

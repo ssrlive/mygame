@@ -66,9 +66,8 @@ fn spawn_pipe_system(
     use rand::Rng;
     let mut rng = rand::rng();
 
-    spawn_timer.timer.set_duration(std::time::Duration::from_secs_f32(
-        rng.random_range(pipe_settings.min_time..pipe_settings.max_time),
-    ));
+    let secs = rng.random_range(pipe_settings.min_time..pipe_settings.max_time);
+    spawn_timer.timer.set_duration(std::time::Duration::from_secs_f32(secs));
 
     let mut new_center_pos = spawn_timer.last_pos - rng.random_range(-pipe_settings.max_center_delta..pipe_settings.max_center_delta);
 

@@ -15,7 +15,6 @@ mod screens;
 use animation::*;
 use bird::*;
 use clouds::*;
-use gamedata::*;
 use gamestate::*;
 use mountains::*;
 use physics::*;
@@ -36,14 +35,9 @@ fn main() {
             GameStatePlugin,
         ))
         .add_systems(Startup, setup)
-        .insert_resource(ClearColor(Color::srgb(0.34, 0.75, 0.79)))
-        .insert_resource(JumpHeight(23.0 * 40.0))
-        .insert_resource(Gravity(45.0 * 40.0))
-        .init_resource::<GameData>()
         .run();
 }
 
-fn setup(mut commands: Commands, mut asset_server: Res<AssetServer>, mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
-    bird::spawn_bird(&mut commands, &mut asset_server, &mut texture_atlases);
 }

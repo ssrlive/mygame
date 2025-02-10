@@ -30,19 +30,22 @@ pub struct BirdPlugin;
 
 impl Plugin for BirdPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                player_input,
+        app.init_resource::<GameData>()
+            .insert_resource(JumpHeight(23.0 * 40.0))
+            .add_systems(Startup, spawn_bird)
+            .add_systems(
+                Update,
                 (
-                    player_bounds_system,
-                    player_collision_system,
-                    velocity_rotator_system,
-                    velocity_animator_system,
-                )
-                    .run_if(in_state(GameState::Playing)),
-            ),
-        );
+                    player_input,
+                    (
+                        player_bounds_system,
+                        player_collision_system,
+                        velocity_rotator_system,
+                        velocity_animator_system,
+                    )
+                        .run_if(in_state(GameState::Playing)),
+                ),
+            );
     }
 }
 
@@ -221,7 +224,7 @@ fn velocity_animator_system(mut query: Query<(&mut Animations, &Velocity)>) {
     }
 }
 
-pub fn spawn_bird(commands: &mut Commands, asset_server: &mut Res<AssetServer>, texture_atlases: &mut ResMut<Assets<TextureAtlasLayout>>) {
+fn spawn_bird(mut commands: Commands, asset_server: Res<AssetServer>, mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>) {
     let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 2, 2, None, None);
     let texture_atlas_layout = texture_atlases.add(layout);
 
