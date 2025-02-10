@@ -1,6 +1,6 @@
-use crate::physics;
 use bevy::prelude::*;
-use physics::*;
+
+use crate::physics::*;
 
 #[derive(Resource)]
 pub struct CloudTimer(Timer);

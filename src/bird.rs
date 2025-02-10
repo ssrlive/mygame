@@ -1,19 +1,12 @@
 use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::{input::keyboard::KeyCode, prelude::*};
 
-use crate::animation;
-use crate::gamedata;
-use crate::gamestate;
-use crate::physics;
-use crate::pipes;
-use crate::screens;
-
-use animation::*;
-use gamedata::*;
-use gamestate::*;
-use physics::*;
-use pipes::*;
-use screens::*;
+use crate::animation::*;
+use crate::gamedata::*;
+use crate::gamestate::*;
+use crate::physics::*;
+use crate::pipes::*;
+use crate::screens::*;
 
 #[derive(Component)]
 pub struct Player;
@@ -123,24 +116,21 @@ fn player_bounds_system(
 fn player_collision_system(
     mut commands: Commands,
     mut game_data: ResMut<GameData>,
-    player_query: Query<(&Player, &Transform)>,
+    player_query: Query<(&Player, &Transform, &Sprite)>,
     mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
     mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
     mut game_state: ResMut<NextState<GameState>>,
 ) {
-    // Player size can't be fetched from AtlasTextureSprite, so I'm hard coding it here...
-    let mut player_size = 6.0 * 32.0;
-    // Make player hitbox half size, to feel more fair
-    player_size *= 0.4;
-    let player_size_vec = (player_size, player_size);
-    let Ok((_player, player_translation)) = player_query.get_single() else {
+    let Ok((_player, player_translation, bird)) = player_query.get_single() else {
         return;
     };
+    let hitbox_size = bird.custom_size.unwrap() / 2.0; // Note the hitbox is half size, to feel more fair
+
     for (_s, translation, _collider, _entity) in &mut score_collider_query.iter() {
         let collision = collide(
             player_translation.translation,
-            player_size_vec.into(),
+            hitbox_size,
             translation.translation,
             Vec2::new(10.0, 1280.0),
         );
@@ -155,7 +145,7 @@ fn player_collision_system(
     for (_pipe, pipe_translation, _collider, pipe_sprite, _pipe_entity) in &mut pipe_query.iter() {
         let collision = collide(
             player_translation.translation,
-            player_size_vec.into(),
+            hitbox_size,
             pipe_translation.translation,
             pipe_sprite.custom_size.unwrap(),
         );

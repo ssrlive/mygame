@@ -1,8 +1,7 @@
-use crate::bounds_deletion;
-use crate::physics;
 use bevy::prelude::*;
-use bounds_deletion::*;
-use physics::*;
+
+use crate::bounds_deletion::*;
+use crate::physics::*;
 
 // Spawn mountains with a delay
 #[derive(Resource)]
