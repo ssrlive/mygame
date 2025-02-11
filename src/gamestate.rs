@@ -22,7 +22,7 @@ impl Plugin for GameStatePlugin {
 
 fn handle_gamestate_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&Player, &mut Transform, &mut Velocity)>,
+    mut player_query: Query<(&Bird, &mut Transform, &mut Velocity)>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility), Without<StartScreen>>,
     mut start_screen_query: Query<(&StartScreen, &mut Visibility), Without<EndScreen>>,
     game_state: Res<State<GameState>>,

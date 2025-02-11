@@ -8,8 +8,10 @@ use crate::physics::*;
 use crate::pipes::*;
 use crate::screens::*;
 
-#[derive(Component)]
-pub struct Player;
+#[derive(Component, Default)]
+pub struct Bird {
+    dead: bool,
+}
 
 #[derive(Component, Deref, DerefMut)]
 pub struct PlayerTimer(pub Timer);
@@ -42,6 +44,7 @@ impl Plugin for BirdPlugin {
                         player_collision_system,
                         velocity_rotator_system,
                         velocity_animator_system,
+                        deal_with_bird_death,
                     )
                         .run_if(in_state(GameState::Playing)),
                 ),
@@ -53,7 +56,7 @@ fn player_input(
     game_state: Res<State<GameState>>,
     jump_height: Res<JumpHeight>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Transform, &Player)>,
+    mut query: Query<(&mut Velocity, &mut Transform, &Bird)>,
 ) {
     let Ok((mut velocity, translation, _player)) = query.get_single_mut() else {
         return;
@@ -83,18 +86,10 @@ fn handle_jump(keyboard_input: Res<ButtonInput<KeyCode>>, jump_height: Res<JumpH
 }
 
 #[allow(clippy::complexity)]
-fn player_bounds_system(
-    mut commands: Commands,
-    mut game_data: ResMut<GameData>,
-    mut player_query: Query<(&Player, &mut Transform, &mut Velocity), Without<Pipe>>,
-    mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
-    mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
-    mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
-    mut game_state: ResMut<NextState<GameState>>,
-) {
+fn player_bounds_system(mut player_query: Query<(&mut Bird, &mut Transform, &mut Velocity), Without<Pipe>>) {
     let half_screen_size = 1280.0 * 0.5;
     let player_size = 32.0 * 6.0;
-    let Ok((_p, mut transform, mut velocity)) = player_query.get_single_mut() else {
+    let Ok((mut bird, mut transform, mut velocity)) = player_query.get_single_mut() else {
         return;
     };
     // bounce against ceiling
@@ -104,14 +99,7 @@ fn player_bounds_system(
     }
     // death on bottom touch
     if transform.translation.y < -half_screen_size {
-        trigger_death(
-            &mut commands,
-            &mut game_data,
-            &mut pipe_query,
-            &mut score_collider_query,
-            &mut end_screen_query,
-            &mut game_state,
-        );
+        bird.dead = true;
     }
 }
 
@@ -119,18 +107,16 @@ fn player_bounds_system(
 fn player_collision_system(
     mut commands: Commands,
     mut game_data: ResMut<GameData>,
-    player_query: Query<(&Player, &Transform, &Sprite)>,
-    mut pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
-    mut score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
-    mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
-    mut game_state: ResMut<NextState<GameState>>,
+    mut player_query: Query<(&mut Bird, &Transform, &Sprite)>,
+    pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite), Without<Bird>>,
+    score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Bird>>,
 ) {
-    let Ok((_player, player_translation, bird)) = player_query.get_single() else {
+    let Ok((mut player, player_translation, bird)) = player_query.get_single_mut() else {
         return;
     };
     let hitbox_size = bird.custom_size.unwrap() / 2.0; // Note the hitbox is half size, to feel more fair
 
-    for (_s, translation, _collider, _entity) in &mut score_collider_query.iter() {
+    for (_s, translation, _collider, entity) in &mut score_collider_query.iter() {
         let collision = collide(
             player_translation.translation,
             hitbox_size,
@@ -139,13 +125,12 @@ fn player_collision_system(
         );
         if collision {
             game_data.score += 1;
-            println!("got score!: {}", game_data.score);
-            commands.entity(_entity).remove::<Collider>();
+            bevy::log::info!("got score!: {}", game_data.score);
+            commands.entity(entity).remove::<Collider>();
         }
     }
     // Check for collision
-    let mut did_collide = false;
-    for (_pipe, pipe_translation, _collider, pipe_sprite, _pipe_entity) in &mut pipe_query.iter() {
+    for (_pipe, pipe_translation, _collider, pipe_sprite) in &mut pipe_query.iter() {
         let collision = collide(
             player_translation.translation,
             hitbox_size,
@@ -153,19 +138,9 @@ fn player_collision_system(
             pipe_sprite.custom_size.unwrap(),
         );
         if collision {
-            did_collide = true;
+            player.dead = true;
             break;
         }
-    }
-    if did_collide {
-        trigger_death(
-            &mut commands,
-            &mut game_data,
-            &mut pipe_query,
-            &mut score_collider_query,
-            &mut end_screen_query,
-            &mut game_state,
-        );
     }
 }
 
@@ -175,22 +150,31 @@ fn collide(pos1: Vec3, size1: Vec2, pos2: Vec3, size2: Vec2) -> bool {
 }
 
 #[allow(clippy::complexity)]
-fn trigger_death(
-    commands: &mut Commands,
-    game_data: &mut ResMut<GameData>,
-    pipe_query: &mut Query<(&Pipe, &Transform, &Collider, &Sprite, Entity), Without<Player>>,
-    score_query: &mut Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Player>>,
-    end_screen_query: &mut Query<(&EndScreen, &mut Visibility)>,
-    game_state: &mut ResMut<NextState<GameState>>,
+fn deal_with_bird_death(
+    mut commands: Commands,
+    mut game_data: ResMut<GameData>,
+    mut player_query: Query<&mut Bird>,
+    pipe_query: Query<(&Pipe, Entity), Without<Bird>>,
+    score_query: Query<(&ScoreGiver, Entity), Without<Bird>>,
+    mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
+    mut game_state: ResMut<NextState<GameState>>,
 ) {
+    let Ok(mut bird) = player_query.get_single_mut() else {
+        return;
+    };
+    if !bird.dead {
+        return;
+    }
+    bird.dead = false;
+
     game_state.set(GameState::Dead);
     game_data.score = 0;
     // Despawn all pipes
-    for (_p, _pt, _c, _ps, pipe_entity) in &mut pipe_query.iter() {
+    for (_p, pipe_entity) in pipe_query.iter() {
         commands.entity(pipe_entity).despawn_recursive();
     }
-    // Despawn score colliders
-    for (_s, _t, _collider, score_entity) in &mut score_query.iter() {
+    // Despawn all score colliders
+    for (_s, score_entity) in &mut score_query.iter() {
         commands.entity(score_entity).despawn_recursive();
     }
     for (_es, mut draw) in &mut end_screen_query.iter_mut() {
@@ -236,7 +220,7 @@ fn spawn_bird(mut commands: Commands, asset_server: Res<AssetServer>, mut textur
         bird,
         Transform::from_translation(Vec3::new(0.0, 0.0, 100.0)),
         PlayerTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
-        Player,
+        Bird::default(),
         AffectedByGravity,
         VelocityRotator {
             angle_up: std::f32::consts::PI * 0.5 * 0.7,
