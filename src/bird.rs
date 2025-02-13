@@ -44,9 +44,9 @@ impl Plugin for BirdPlugin {
             .add_systems(
                 Update,
                 (
-                    update_score_text,
                     handle_stay_in_screen.run_if(in_state(GameState::Menu)),
                     (
+                        update_score_text,
                         handle_jump,
                         player_bounds_system,
                         player_collision_system,
@@ -61,8 +61,8 @@ impl Plugin for BirdPlugin {
 }
 
 fn update_score_text(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {
-    if score.is_changed() {
-        for mut text in &mut query {
+    if score.is_changed() && score.0 != 0 {
+        if let Ok(mut text) = query.get_single_mut() {
             text.0 = score.0.to_string();
         }
     }
@@ -83,13 +83,14 @@ fn handle_jump(
     mut commands: Commands,
     mut query: Query<(&mut Velocity, &mut Transform, &Bird)>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
     jump_height: Res<JumpHeight>,
     audio_assets: Res<AudioAssets>,
 ) {
     let Ok((mut velocity, _transform, _bird)) = query.get_single_mut() else {
         return;
     };
-    if keyboard_input.just_pressed(KeyCode::Space) {
+    if keyboard_input.just_pressed(KeyCode::Space) || mouse_button_input.just_pressed(MouseButton::Left) {
         velocity.0.y = jump_height.0;
         commands.spawn((AudioPlayer::new(audio_assets.flap.clone()), PlaybackSettings::DESPAWN));
     }
@@ -171,6 +172,7 @@ fn deal_with_bird_death(
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
     mut game_state: ResMut<NextState<GameState>>,
     audio_assets: Res<AudioAssets>,
+    mut score_text_query: Query<&mut Text, With<ScoreText>>,
 ) {
     let Ok(mut bird) = player_query.get_single_mut() else {
         return;
@@ -182,7 +184,7 @@ fn deal_with_bird_death(
     bird.dead = false;
 
     game_state.set(GameState::Dead);
-    score.0 = 0;
+
     // Despawn all pipes
     for (_p, pipe_entity) in pipe_query.iter() {
         commands.entity(pipe_entity).despawn_recursive();
@@ -194,6 +196,11 @@ fn deal_with_bird_death(
     for (_es, mut draw) in &mut end_screen_query.iter_mut() {
         *draw = Visibility::Visible;
     }
+    if let Ok(mut text) = score_text_query.get_single_mut() {
+        text.0 = score.0.to_string();
+    }
+
+    score.0 = 0;
 }
 
 fn velocity_rotator_system(mut query: Query<(&Velocity, &mut Transform, &VelocityRotator)>) {
