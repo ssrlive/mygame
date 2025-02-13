@@ -1,13 +1,18 @@
 [package]
 name = "sokoban-runner"
-version = "0.1.0"
+version = "0.1.3"
 edition = "2021"
+
+[features]
+default = ["dev_native"]
+dev = ["bevy/dynamic_linking", "bevy/bevy_dev_tools"]
+dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 
 [dependencies]
 # System clipboard
 arboard = "3.4"
 benimator = "4.1"
-bevy = { version = "0.15", features = [] }
+bevy = { version = "0.15", features = ["wayland"] }
 bevy_kira_audio = "0.22"
 bitflags = "2.6"
 dirs = "6"
