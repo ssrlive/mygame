@@ -11,5 +11,5 @@ dev_native = ["dev", "bevy/file_watcher", "bevy/embedded_watcher"]
 
 [dependencies]
 bevy = { version = "0.15", features = ["wayland"] }
-notify = "8"
+bevy_asset_loader = { version = "0.22", features = ["2d"] }
 rand = "0.9"

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::physics::*;
+use crate::{assets::ImageAssets, physics::*};
 
 #[derive(Resource)]
 pub struct CloudTimer(Timer);
@@ -14,12 +14,12 @@ impl Plugin for CloudPlugin {
     }
 }
 
-fn cloud_spawn_system(mut commands: Commands, time: Res<Time>, mut cloud_timer: ResMut<CloudTimer>, asset_server: Res<AssetServer>) {
+fn cloud_spawn_system(mut commands: Commands, time: Res<Time>, mut cloud_timer: ResMut<CloudTimer>, image_assets: Res<ImageAssets>) {
     use rand::Rng;
     let mut rng = rand::rng();
     let cloud_texture = match rng.random_bool(0.5) {
-        true => asset_server.load("cloud_1.png"),
-        false => asset_server.load("cloud_2.png"),
+        true => image_assets.cloud_1.clone(),
+        false => image_assets.cloud_2.clone(),
     };
     let mut sprite = Sprite::from_image(cloud_texture);
     sprite.custom_size = Some(Vec2::new(43.0, 8.0) * rng.random_range(6.0..30.0));

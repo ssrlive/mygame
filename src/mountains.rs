@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::assets::ImageAssets;
 use crate::bounds_deletion::*;
 use crate::physics::*;
 
@@ -20,13 +21,13 @@ fn mountain_spawn_system(
     mut commands: Commands,
     time: Res<Time>,
     mut mountain_timer: ResMut<MountainTimer>,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
 ) {
     use rand::Rng;
     let mut rng = rand::rng();
     let mountain_texture = match rng.random_bool(0.5) {
-        true => asset_server.load("mountain.png"),
-        false => asset_server.load("mountain.png"),
+        true => image_assets.mountain.clone(),
+        false => image_assets.mountain.clone(),
     };
 
     let mut sprite = Sprite::from_image(mountain_texture);

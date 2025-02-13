@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::assets::ImageAssets;
 use crate::bounds_deletion::*;
 use crate::gamestate::*;
 use crate::physics::*;
@@ -54,7 +55,7 @@ impl Plugin for PipePlugin {
 fn spawn_pipe_system(
     mut commands: Commands,
     pipe_settings: Res<PipeSpawnSettings>,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
     time: Res<Time>,
     mut spawn_timer: ResMut<SpawnTimer>,
 ) {
@@ -82,7 +83,7 @@ fn spawn_pipe_system(
     // to world units
     new_center_pos *= 1280.0 * 0.5;
 
-    let pipe_texture_handle = asset_server.load("pipe.png");
+    let pipe_texture_handle = image_assets.pipe.clone();
 
     let pipe_offset_y = (6.0 * 128.0) * 0.5;
     let pipe_offset_x = (6.0 * 32.0) * 0.5;

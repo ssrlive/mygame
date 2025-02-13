@@ -2,11 +2,17 @@ use bevy::math::bounding::{Aabb2d, IntersectsVolume};
 use bevy::{input::keyboard::KeyCode, prelude::*};
 
 use crate::animation::*;
-use crate::gamedata::*;
+use crate::assets::{AudioAssets, ImageAssets};
 use crate::gamestate::*;
 use crate::physics::*;
 use crate::pipes::*;
 use crate::screens::*;
+
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Hash, Resource)]
+pub struct Score(pub i32);
+
+#[derive(Component)]
+pub struct ScoreText;
 
 #[derive(Component, Default)]
 pub struct Bird {
@@ -32,14 +38,16 @@ pub struct BirdPlugin;
 
 impl Plugin for BirdPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<GameData>()
+        app.init_resource::<Score>()
             .insert_resource(JumpHeight(23.0 * 40.0))
             .add_systems(Startup, spawn_bird)
             .add_systems(
                 Update,
                 (
-                    player_input,
+                    update_score_text,
+                    handle_stay_in_screen.run_if(in_state(GameState::Menu)),
                     (
+                        handle_jump,
                         player_bounds_system,
                         player_collision_system,
                         velocity_rotator_system,
@@ -52,36 +60,38 @@ impl Plugin for BirdPlugin {
     }
 }
 
-fn player_input(
-    game_state: Res<State<GameState>>,
-    jump_height: Res<JumpHeight>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut query: Query<(&mut Velocity, &mut Transform, &Bird)>,
-) {
-    let Ok((mut velocity, translation, _player)) = query.get_single_mut() else {
-        return;
-    };
-    match game_state.get() {
-        GameState::Menu => {
-            handle_stay_in_screen(jump_height, &mut velocity, &translation);
+fn update_score_text(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {
+    if score.is_changed() {
+        for mut text in &mut query {
+            text.0 = score.0.to_string();
         }
-        GameState::Playing => {
-            handle_jump(keyboard_input, jump_height, velocity);
-        }
-        GameState::Dead => {}
     }
 }
 
 // Auto jump until input is given
-fn handle_stay_in_screen(jump_height: Res<JumpHeight>, velocity: &mut Mut<'_, Velocity>, transform: &Mut<'_, Transform>) {
+fn handle_stay_in_screen(jump_height: Res<JumpHeight>, mut query: Query<(&mut Velocity, &mut Transform, &Bird)>) {
+    let Ok((mut velocity, transform, _player)) = query.get_single_mut() else {
+        return;
+    };
+
     if transform.translation.y < 0.0 {
         velocity.0.y = jump_height.0;
     }
 }
 
-fn handle_jump(keyboard_input: Res<ButtonInput<KeyCode>>, jump_height: Res<JumpHeight>, mut velocity: Mut<Velocity>) {
+fn handle_jump(
+    mut commands: Commands,
+    mut query: Query<(&mut Velocity, &mut Transform, &Bird)>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    jump_height: Res<JumpHeight>,
+    audio_assets: Res<AudioAssets>,
+) {
+    let Ok((mut velocity, _transform, _bird)) = query.get_single_mut() else {
+        return;
+    };
     if keyboard_input.just_pressed(KeyCode::Space) {
         velocity.0.y = jump_height.0;
+        commands.spawn((AudioPlayer::new(audio_assets.flap.clone()), PlaybackSettings::DESPAWN));
     }
 }
 
@@ -106,10 +116,11 @@ fn player_bounds_system(mut player_query: Query<(&mut Bird, &mut Transform, &mut
 #[allow(clippy::complexity)]
 fn player_collision_system(
     mut commands: Commands,
-    mut game_data: ResMut<GameData>,
+    mut score: ResMut<Score>,
     mut player_query: Query<(&mut Bird, &Transform, &Sprite)>,
     pipe_query: Query<(&Pipe, &Transform, &Collider, &Sprite), Without<Bird>>,
     score_collider_query: Query<(&ScoreGiver, &Transform, &Collider, Entity), Without<Bird>>,
+    audio_assets: Res<AudioAssets>,
 ) {
     let Ok((mut player, player_translation, bird)) = player_query.get_single_mut() else {
         return;
@@ -124,8 +135,9 @@ fn player_collision_system(
             Vec2::new(10.0, 1280.0),
         );
         if collision {
-            game_data.score += 1;
-            bevy::log::info!("got score!: {}", game_data.score);
+            score.0 += 1;
+            bevy::log::info!("got score!: {}", score.0);
+            commands.spawn((AudioPlayer::new(audio_assets.point.clone()), PlaybackSettings::DESPAWN));
             commands.entity(entity).remove::<Collider>();
         }
     }
@@ -152,12 +164,13 @@ fn collide(pos1: Vec3, size1: Vec2, pos2: Vec3, size2: Vec2) -> bool {
 #[allow(clippy::complexity)]
 fn deal_with_bird_death(
     mut commands: Commands,
-    mut game_data: ResMut<GameData>,
+    mut score: ResMut<Score>,
     mut player_query: Query<&mut Bird>,
     pipe_query: Query<(&Pipe, Entity), Without<Bird>>,
     score_query: Query<(&ScoreGiver, Entity), Without<Bird>>,
     mut end_screen_query: Query<(&EndScreen, &mut Visibility)>,
     mut game_state: ResMut<NextState<GameState>>,
+    audio_assets: Res<AudioAssets>,
 ) {
     let Ok(mut bird) = player_query.get_single_mut() else {
         return;
@@ -165,10 +178,11 @@ fn deal_with_bird_death(
     if !bird.dead {
         return;
     }
+    commands.spawn((AudioPlayer::new(audio_assets.hit.clone()), PlaybackSettings::DESPAWN));
     bird.dead = false;
 
     game_state.set(GameState::Dead);
-    game_data.score = 0;
+    score.0 = 0;
     // Despawn all pipes
     for (_p, pipe_entity) in pipe_query.iter() {
         commands.entity(pipe_entity).despawn_recursive();
@@ -208,12 +222,8 @@ fn velocity_animator_system(mut query: Query<(&mut Animations, &Velocity)>) {
     }
 }
 
-fn spawn_bird(mut commands: Commands, asset_server: Res<AssetServer>, mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>) {
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 2, 2, None, None);
-    let texture_atlas_layout = texture_atlases.add(layout);
-
-    let image = asset_server.load("bird.png");
-    let mut bird = Sprite::from_atlas_image(image, texture_atlas_layout.into());
+fn spawn_bird(mut commands: Commands, image_assets: Res<ImageAssets>) {
+    let mut bird = Sprite::from_atlas_image(image_assets.bird.clone(), image_assets.bird_layout.clone().into());
     bird.custom_size = Some(Vec2::splat(32.0 * 6.0));
 
     commands.spawn((

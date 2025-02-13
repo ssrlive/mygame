@@ -1,11 +1,12 @@
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
 use bevy::prelude::*;
+
 mod animation;
+mod assets;
 mod bird;
 mod bounds_deletion;
 mod clouds;
-mod gamedata;
 mod gamestate;
 mod mountains;
 mod physics;
@@ -13,6 +14,7 @@ mod pipes;
 mod screens;
 
 use animation::*;
+use assets::AssetsPlugin;
 use bird::*;
 use clouds::*;
 use gamestate::*;
@@ -25,6 +27,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
+            AssetsPlugin,
             PipePlugin,
             BirdPlugin,
             CloudPlugin,
