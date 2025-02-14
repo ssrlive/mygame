@@ -126,7 +126,7 @@ fn player_collision_system(
     let Ok((mut player, player_translation, bird)) = player_query.get_single_mut() else {
         return;
     };
-    let hitbox_size = bird.custom_size.unwrap() / 2.0; // Note the hitbox is half size, to feel more fair
+    let hitbox_size = bird.custom_size.unwrap() * 0.5; // Note the hitbox is half size, to feel more fair
 
     for (_s, translation, _collider, entity) in &mut score_collider_query.iter() {
         let collision = collide(

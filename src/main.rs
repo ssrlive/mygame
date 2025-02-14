@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "dev"), windows_subsystem = "windows")]
 
-use bevy::prelude::*;
+use bevy::{prelude::*, render::camera::ScalingMode};
 
 mod animation;
 mod assets;
@@ -32,7 +32,7 @@ fn main() {
             BirdPlugin,
             CloudPlugin,
             MountainPlugin,
-            MyAnimationPlugin,
+            BirdAnimationPlugin,
             PhysicsPlugin,
             ScreensPlugin,
             GameStatePlugin,
@@ -42,5 +42,10 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
+    let projection = Projection::Orthographic(OrthographicProjection {
+        scaling_mode: ScalingMode::WindowSize,
+        scale: 1.4,
+        ..OrthographicProjection::default_2d()
+    });
+    commands.spawn((Camera2d, projection));
 }

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::bird::PlayerTimer;
 
-pub struct MyAnimationPlugin;
+pub struct BirdAnimationPlugin;
 
 pub struct AnimationFrame {
     pub index: i32,
@@ -20,7 +20,7 @@ pub struct Animations {
     pub current_animation: i32,
 }
 
-impl Plugin for MyAnimationPlugin {
+impl Plugin for BirdAnimationPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, animate_system);
     }
