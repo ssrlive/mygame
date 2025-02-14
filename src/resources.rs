@@ -6,7 +6,7 @@ use crate::*;
 
 pub struct ResourcesPlugin;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 pub struct GlobalTextureAtlas {
     pub layout: Option<Handle<TextureAtlasLayout>>,
     pub image: Option<Handle<Image>>,
@@ -35,9 +35,9 @@ fn load_assets(
     handle.image = Some(asset_server.load(SPRITE_SHEET_PATH));
 
     let layout = TextureAtlasLayout::from_grid(
-        Vec2::new(TILE_W as f32, TILE_H as f32),
-        SPRITE_SHEET_W,
-        SPRITE_SHEET_H,
+        UVec2::new(TILE_W as _, TILE_H as _),
+        SPRITE_SHEET_W as _,
+        SPRITE_SHEET_H as _,
         None,
         None,
     );
@@ -59,15 +59,6 @@ fn update_cursor_position(
     let window = window_query.single();
     cursor_pos.0 = window
         .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
-        .map(|ray| ray.origin.truncate());
-}
-
-impl Default for GlobalTextureAtlas {
-    fn default() -> Self {
-        Self {
-            layout: None,
-            image: None,
-        }
-    }
+        .map(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .map(|ray| ray.unwrap().origin.truncate());
 }

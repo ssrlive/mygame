@@ -46,13 +46,15 @@ fn animate_player(
         return;
     }
 
-    let (mut atlas, state, timer) = player_query.single_mut();
+    let (mut sprite, state, timer) = player_query.single_mut();
     if timer.just_finished() {
         let base_sprite_index = match state {
             PlayerState::Idle => 0,
             PlayerState::Run => 4,
         };
-        atlas.index = base_sprite_index + (atlas.index + 1) % 4;
+        if let Some(atlas) = sprite.texture_atlas.as_mut() {
+            atlas.index = base_sprite_index + (atlas.index + 1) % 4;
+        }
     }
 }
 
@@ -61,9 +63,11 @@ fn animate_enemy(mut enemy_query: Query<(&mut Sprite, &AnimationTimer, &EnemyTyp
         return;
     }
 
-    for (mut atlas, timer, enemy_type) in enemy_query.iter_mut() {
+    for (mut sprite, timer, enemy_type) in enemy_query.iter_mut() {
         if timer.just_finished() {
-            atlas.index = enemy_type.get_base_sprite_index() + (atlas.index + 1) % 4;
+            if let Some(atlas) = sprite.texture_atlas.as_mut() {
+                atlas.index = enemy_type.get_base_sprite_index() + (atlas.index + 1) % 4;
+            }
         }
     }
 }
@@ -78,11 +82,7 @@ fn flip_player_sprite_x(
 
     let (mut sprite, transform) = player_query.single_mut();
     if let Some(cursor_position) = cursor_position.0 {
-        if cursor_position.x > transform.translation.x {
-            sprite.flip_x = false;
-        } else {
-            sprite.flip_x = true;
-        }
+        sprite.flip_x = cursor_position.x <= transform.translation.x;
     }
 }
 
@@ -96,11 +96,7 @@ fn flip_enemy_sprite_x(
 
     let player_pos = player_query.single().translation;
     for (mut sprite, transform) in enemy_query.iter_mut() {
-        if transform.translation.x < player_pos.x {
-            sprite.flip_x = false;
-        } else {
-            sprite.flip_x = true;
-        }
+        sprite.flip_x = transform.translation.x >= player_pos.x;
     }
 }
 
@@ -114,10 +110,6 @@ fn flip_gun_sprite_y(
 
     let (mut sprite, transform) = gun_query.single_mut();
     if let Some(cursor_position) = cursor_position.0 {
-        if cursor_position.x > transform.translation.x {
-            sprite.flip_y = false;
-        } else {
-            sprite.flip_y = true;
-        }
+        sprite.flip_y = cursor_position.x <= transform.translation.x;
     }
 }

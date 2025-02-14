@@ -30,15 +30,11 @@ fn init_world(
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     commands.spawn((
-        SpriteSheetBundle {
-            texture: handle.image.clone().unwrap(),
-            atlas: TextureAtlas {
-                layout: handle.layout.clone().unwrap(),
-                index: 0,
-            },
-            transform: Transform::from_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-            ..default()
-        },
+        Sprite::from_atlas_image(
+            handle.image.clone().unwrap(),
+            handle.layout.clone().unwrap().into(),
+        ),
+        Transform::from_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
         Player,
         Health(PLAYER_HEALTH),
         PlayerState::default(),
@@ -46,15 +42,14 @@ fn init_world(
         GameEntity,
     ));
     commands.spawn((
-        SpriteSheetBundle {
-            texture: handle.image.clone().unwrap(),
-            atlas: TextureAtlas {
+        Sprite::from_atlas_image(
+            handle.image.clone().unwrap(),
+            TextureAtlas {
                 layout: handle.layout.clone().unwrap(),
                 index: 17,
             },
-            transform: Transform::from_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-            ..default()
-        },
+        ),
+        Transform::from_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
         Gun,
         GunTimer(Stopwatch::new()),
         GameEntity,
@@ -64,21 +59,18 @@ fn init_world(
 }
 
 fn spawn_world_decorations(mut commands: Commands, handle: Res<GlobalTextureAtlas>) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for _ in 0..NUM_WORLD_DECORATIONS {
-        let x = rng.gen_range(-WORLD_W..WORLD_W);
-        let y = rng.gen_range(-WORLD_H..WORLD_H);
+        let x = rng.random_range(-WORLD_W..WORLD_W);
+        let y = rng.random_range(-WORLD_H..WORLD_H);
+
+        let mut atlas: TextureAtlas = handle.layout.clone().unwrap().into();
+        atlas.index = rng.random_range(24..=25);
+
         commands.spawn((
-            SpriteSheetBundle {
-                texture: handle.image.clone().unwrap(),
-                atlas: TextureAtlas {
-                    layout: handle.layout.clone().unwrap(),
-                    index: rng.gen_range(24..=25),
-                },
-                transform: Transform::from_translation(vec3(x, y, 0.0))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                ..default()
-            },
+            Sprite::from_atlas_image(handle.image.clone().unwrap(), atlas),
+            Transform::from_translation(vec3(x, y, 0.0))
+                .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
             GameEntity,
         ));
     }

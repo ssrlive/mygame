@@ -97,28 +97,23 @@ fn handle_gun_input(
         return;
     }
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let bullet_direction = gun_transform.local_x();
     if gun_timer.0.elapsed_secs() >= BULLET_SPAWN_INTERVAL {
         gun_timer.0.reset();
 
         for _ in 0..NUM_BULLETS_PER_SHOT {
             let dir = vec3(
-                bullet_direction.x + rng.gen_range(-0.5..0.5),
-                bullet_direction.y + rng.gen_range(-0.5..0.5),
+                bullet_direction.x + rng.random_range(-0.5..0.5),
+                bullet_direction.y + rng.random_range(-0.5..0.5),
                 bullet_direction.z,
             );
+            let mut atlas: TextureAtlas = handle.layout.clone().unwrap().into();
+            atlas.index = 16;
             commands.spawn((
-                SpriteSheetBundle {
-                    texture: handle.image.clone().unwrap(),
-                    atlas: TextureAtlas {
-                        layout: handle.layout.clone().unwrap(),
-                        index: 16,
-                    },
-                    transform: Transform::from_translation(vec3(gun_pos.x, gun_pos.y, 1.0))
-                        .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                    ..default()
-                },
+                Sprite::from_atlas_image(handle.image.clone().unwrap(), atlas),
+                Transform::from_translation(vec3(gun_pos.x, gun_pos.y, 1.0))
+                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
                 Bullet,
                 BulletDirection(dir),
                 SpawnInstant(Instant::now()),

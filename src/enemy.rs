@@ -83,17 +83,12 @@ fn spawn_enemies(
     for _ in 0..enemy_spawn_count {
         let (x, y) = get_random_position_around(player_pos);
         let enemy_type = EnemyType::get_rand_enemy();
+        let mut atlas: TextureAtlas = handle.layout.clone().unwrap().into();
+        atlas.index = enemy_type.get_base_sprite_index();
         commands.spawn((
-            SpriteSheetBundle {
-                texture: handle.image.clone().unwrap(),
-                atlas: TextureAtlas {
-                    layout: handle.layout.clone().unwrap(),
-                    index: enemy_type.get_base_sprite_index(),
-                },
-                transform: Transform::from_translation(vec3(x, y, 1.0))
-                    .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
-                ..default()
-            },
+            Sprite::from_atlas_image(handle.image.clone().unwrap(), atlas),
+            Transform::from_translation(vec3(x, y, 1.0))
+                .with_scale(Vec3::splat(SPRITE_SCALE_FACTOR)),
             Enemy::default(),
             enemy_type,
             AnimationTimer(Timer::from_seconds(0.08, TimerMode::Repeating)),
@@ -103,9 +98,9 @@ fn spawn_enemies(
 }
 
 fn get_random_position_around(pos: Vec2) -> (f32, f32) {
-    let mut rng = rand::thread_rng();
-    let angle = rng.gen_range(0.0..PI * 2.0);
-    let dist = rng.gen_range(1000.0..5000.0);
+    let mut rng = rand::rng();
+    let angle = rng.random_range(0.0..PI * 2.0);
+    let dist = rng.random_range(1000.0..5000.0);
 
     let offset_x = angle.cos() * dist;
     let offset_y = angle.sin() * dist;
@@ -126,13 +121,13 @@ impl Default for Enemy {
 
 impl EnemyType {
     fn get_rand_enemy() -> Self {
-        let mut rng = rand::thread_rng();
-        let rand_index = rng.gen_range(0..3);
-        return match rand_index {
+        let mut rng = rand::rng();
+        let rand_index = rng.random_range(0..3);
+        match rand_index {
             0 => Self::Green,
             1 => Self::Red,
             _ => Self::Skin,
-        };
+        }
     }
 
     pub fn get_base_sprite_index(&self) -> usize {

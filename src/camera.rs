@@ -8,7 +8,7 @@ pub struct FollowCameraPlugin;
 
 impl Plugin for FollowCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(PanCamPlugin::default())
+        app.add_plugins(PanCamPlugin)
             .add_systems(OnEnter(GameState::Loading), setup_camera)
             .add_systems(
                 Update,
@@ -18,10 +18,13 @@ impl Plugin for FollowCameraPlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default()).insert(PanCam {
-        grab_buttons: vec![],
-        ..default()
-    });
+    commands.spawn((
+        Camera2d,
+        PanCam {
+            grab_buttons: vec![],
+            ..default()
+        },
+    ));
 }
 
 fn camera_follow_player(
